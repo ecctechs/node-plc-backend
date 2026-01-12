@@ -3,7 +3,7 @@ const service = require('../services/workingTime.service');
 exports.getWorkingTime = async (req, res) => {
   try {
     const data = await service.get();
-    res.json("data22");
+    res.json("data2244");
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
