@@ -43,7 +43,7 @@ async function startDevicePolling(device) {
 
     try {
       // 🔹 อ่าน PLC
-      const value = await plcService.readOnOff(device.plc_address);
+      const value = await plcService.readValue(device.plc_address);
       readSuccess = true;
 
       await logConnectionChange(device, 'connected');

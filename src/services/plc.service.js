@@ -5,9 +5,8 @@ const Modbus = require('jsmodbus');
 
 const PLC_HOST = process.env.PLC_HOST || '192.168.3.250';
 const PLC_PORT = process.env.PLC_PORT || 502;
-const UNIT_ID  = 1;
+const UNIT_ID  = 0; // ⭐ FX5U ใช้ 0
 
-// ===== socket + client =====
 let socket;
 let client;
 let isConnected = false;
@@ -38,38 +37,46 @@ function connectPLC() {
   socket.connect({ host: PLC_HOST, port: PLC_PORT });
 }
 
-// เริ่ม connect ทันทีเมื่อโหลดไฟล์
 connectPLC();
 
 /**
- * แปลง address string → coil address
- * ตัวอย่าง:
- *  M0  -> 8192
- *  M1  -> 8193
+ * ===== Parse address =====
  */
-function parseCoilAddress(address) {
-  if (!address.startsWith('M')) {
-    throw new Error(`Unsupported address ${address}`);
-  }
+function parseAddress(address) {
+  const type = address[0].toUpperCase();
   const index = parseInt(address.slice(1), 10);
-  return 8192 + index;
+
+  if (Number.isNaN(index)) {
+    throw new Error(`Invalid address ${address}`);
+  }
+
+  switch (type) {
+    case 'M':
+      return { type: 'coil', addr: 8192 + index };
+    case 'D':
+      return { type: 'register', addr: index };
+    default:
+      throw new Error(`Unsupported address ${address}`);
+  }
 }
 
 /**
- * อ่าน ON/OFF จาก PLC (coil)
- * return boolean
+ * ===== Read value from PLC =====
  */
-exports.readOnOff = async (address) => {
+exports.readValue = async (address) => {
   if (!isConnected) {
     throw new Error('PLC not connected');
   }
 
-  const coilAddress = parseCoilAddress(address);
+  const parsed = parseAddress(address);
 
-  const resp = await client.readCoils(coilAddress, 1);
+  if (parsed.type === 'coil') {
+    const resp = await client.readCoils(parsed.addr, 1);
+    return resp.response.body.valuesAsArray[0]; // true / false
+  }
 
-  // jsmodbus return Buffer
-  const value = resp.response.body.valuesAsArray[0];
-
-  return value; // true / false
+  if (parsed.type === 'register') {
+    const resp = await client.readHoldingRegisters(parsed.addr, 1);
+    return resp.response.body.valuesAsArray[0]; // number
+  }
 };

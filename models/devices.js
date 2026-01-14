@@ -53,5 +53,25 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true
   });
 
+    Device.associate = (models) => {
+    // ⭐ Device → Number Config (1:1)
+    Device.hasOne(models.DeviceNumberConfig, {
+      foreignKey: 'device_id',
+      as: 'numberConfig',
+      onDelete: 'CASCADE'
+    });
+
+    // (ของเดิมที่คุณมี)
+    Device.hasMany(models.DeviceLog, {
+      foreignKey: 'device_id',
+      as: 'logs'
+    });
+
+    Device.hasMany(models.DeviceConnectionLog, {
+      foreignKey: 'device_id',
+      as: 'connectionLogs'
+    });
+  };
+
   return Device;
 };

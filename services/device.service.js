@@ -6,7 +6,7 @@ exports.list = async () => repo.findAll();
 exports.getById = async (id) => repo.findById(id);
 
 exports.create = async (payload) => {
-  const { name, device_type, plc_address, refresh_rate_ms } = payload;
+  const { name, device_type, data_display_type , plc_address, refresh_rate_ms } = payload;
   if (!name || !device_type || !plc_address) {
     throw new Error('name, device_type, plc_address are required');
   }
@@ -18,6 +18,7 @@ exports.create = async (payload) => {
   const device = await repo.create({
     name,
     device_type,
+    data_display_type,
     plc_address,
     refresh_rate_ms
   });

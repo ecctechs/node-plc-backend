@@ -9,7 +9,7 @@ exports.create = async (data) => {
   return Device.create({
     name: data.name,
     device_type: data.device_type,
-    data_display_type: 'onoff', // ล็อกไว้ก่อน
+    data_display_type: data.data_display_type, // ล็อกไว้ก่อน
     plc_address: data.plc_address,
     refresh_rate_ms: data.refresh_rate_ms || 1000,
     is_active: true
