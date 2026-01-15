@@ -10,7 +10,7 @@ exports.read = async (req, res) => {
       });
     }
 
-    const value = await plcService.readValue(address);
+    const value = await plcService.readAddress(address);
 
     res.json({ value });
   } catch (err) {

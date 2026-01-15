@@ -116,3 +116,21 @@ exports.readValue = async (device) => {
       );
   }
 };
+
+exports.readAddress = async (address) => {
+  if (!isConnected) {
+    throw new Error('PLC not connected');
+  }
+
+  const parsed = parseAddress(address);
+
+  if (parsed.type === 'coil') {
+    const resp = await client.readCoils(parsed.addr, 1);
+    return resp.response.body.valuesAsArray[0]; // true / false
+  }
+
+  if (parsed.type === 'register') {
+    const resp = await client.readHoldingRegisters(parsed.addr, 1);
+    return resp.response.body.valuesAsArray[0]; // number
+  }
+};
