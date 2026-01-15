@@ -11,7 +11,9 @@ let socket;
 let client;
 let isConnected = false;
 
-// ===== connect PLC =====
+/* ===============================
+ * CONNECT PLC
+ * =============================== */
 function connectPLC() {
   if (isConnected) return;
 
@@ -39,9 +41,9 @@ function connectPLC() {
 
 connectPLC();
 
-/**
- * ===== Parse address =====
- */
+/* ===============================
+ * PARSE ADDRESS
+ * =============================== */
 function parseAddress(address) {
   const type = address[0].toUpperCase();
   const index = parseInt(address.slice(1), 10);
@@ -52,7 +54,7 @@ function parseAddress(address) {
 
   switch (type) {
     case 'M':
-      return { type: 'coil', addr: 8192 + index };
+      return { type: 'coil', addr: 8192 + index }; // FX5U
     case 'D':
       return { type: 'register', addr: index };
     default:
@@ -60,23 +62,57 @@ function parseAddress(address) {
   }
 }
 
-/**
- * ===== Read value from PLC =====
- */
-exports.readValue = async (address) => {
+/* ===============================
+ * READ ON/OFF (M)
+ * =============================== */
+exports.readOnOff = async (address) => {
   if (!isConnected) {
     throw new Error('PLC not connected');
   }
 
   const parsed = parseAddress(address);
 
-  if (parsed.type === 'coil') {
-    const resp = await client.readCoils(parsed.addr, 1);
-    return resp.response.body.valuesAsArray[0]; // true / false
+  if (parsed.type !== 'coil') {
+    throw new Error(`Address ${address} is not ON/OFF type`);
   }
 
-  if (parsed.type === 'register') {
-    const resp = await client.readHoldingRegisters(parsed.addr, 1);
-    return resp.response.body.valuesAsArray[0]; // number
+  const resp = await client.readCoils(parsed.addr, 1);
+  return resp.response.body.valuesAsArray[0]; // boolean
+};
+
+/* ===============================
+ * READ NUMBER (D)
+ * =============================== */
+exports.readNumber = async (address) => {
+  if (!isConnected) {
+    throw new Error('PLC not connected');
+  }
+
+  const parsed = parseAddress(address);
+
+  if (parsed.type !== 'register') {
+    throw new Error(`Address ${address} is not NUMBER type`);
+  }
+
+  const resp = await client.readHoldingRegisters(parsed.addr, 1);
+  return resp.response.body.valuesAsArray[0]; // number (INT16)
+};
+
+/* ===============================
+ * READ VALUE (AUTO BY TYPE)
+ * =============================== */
+exports.readValue = async (device) => {
+  switch (device.data_display_type) {
+    case 'onoff':
+      return exports.readOnOff(device.plc_address);
+
+    case 'number':
+    case 'number_gauge':
+      return exports.readNumber(device.plc_address);
+
+    default:
+      throw new Error(
+        `Unsupported data_display_type: ${device.data_display_type}`
+      );
   }
 };

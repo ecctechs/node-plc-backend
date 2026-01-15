@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const DeviceLog = sequelize.define('DeviceLog', {
     value: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.FLOAT,
       allowNull: false
     }
   }, {

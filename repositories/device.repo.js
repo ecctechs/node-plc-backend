@@ -1,7 +1,17 @@
-const { Device , sequelize } = require('../models');
+const { Device , sequelize , DeviceNumberConfig } = require('../models');
 const { QueryTypes } = require('sequelize');
 
-exports.findAll = async () => Device.findAll({ order: [['id','ASC']] });
+exports.findAll = async () => Device.findAll({
+    include: [
+      {
+        model: DeviceNumberConfig,
+        as: 'numberConfig',
+        required: false   // ⭐ INNER JOIN
+      }
+    ],
+    order: [['id', 'ASC']]
+  });
+
 
 exports.findById = async (id) => Device.findByPk(id);
 
@@ -62,3 +72,4 @@ exports.getStatusWithLatestValue = async () => {
 };
 
 exports.remove = async (id) => Device.destroy({ where: { id } });
+

@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     last_value: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.FLOAT,
       allowNull: true
     },
     

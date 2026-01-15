@@ -80,7 +80,7 @@ exports.getStatusList = async () => {
     return {
       id: r.id,
       name: r.name,
-      value: r.value ?? false, // ถ้าไม่มี log ให้ถือ OFF
+      last_value: r.value ?? null, // ถ้าไม่มี log ให้ถือ OFF
       connected,
       last_seen_at: r.last_seen_at,
       value_updated_at: r.value_updated_at

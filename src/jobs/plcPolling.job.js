@@ -42,13 +42,17 @@ async function startDevicePolling(device) {
     let readSuccess = false;
 
     try {
-      // 🔹 อ่าน PLC
-      const value = await plcService.readValue(device.plc_address);
+      const rawValue = await plcService.readValue(device);
       readSuccess = true;
+
+      // แปลง on/off → number
+      const value =
+        device.data_display_type === 'onoff'
+          ? (rawValue ? 1 : 0)
+          : rawValue;
 
       await logConnectionChange(device, 'connected');
 
-      // ✅ อ่านได้ → update last_value + last_seen_at
       await Device.update(
         {
           last_value: value,
@@ -57,64 +61,35 @@ async function startDevicePolling(device) {
         { where: { id: device.id } }
       );
 
-      // ✅ log ทุก interval
       await DeviceLog.create({
         device_id: device.id,
         value,
         created_at: now
       });
 
-      // update cache ใน memory
+      // cache
       device.last_value = value;
 
-      console.log(
-        `[PLC OK] ${device.name} (${device.plc_address}) = ${value}`
-      );
-
     } catch (err) {
+      let fallbackValue =
+        device.last_value !== null
+          ? device.last_value
+          : 0; // ⭐ fallback เป็น number เสมอ
 
-      // ===== CONNECTION STATUS CHECK =====
-      const timeoutMs = device.refresh_rate_ms * 2;
-
-      const isConnected =
-        readSuccess ||
-        (
-          device.last_seen_at &&
-          (now - new Date(device.last_seen_at)) <= timeoutMs
-        );
-
-      await logConnectionChange(          // ⭐ ADD
-        device,
-        isConnected ? 'connected' : 'disconnected'
-      );
-
-      // ❌ อ่านไม่ได้ → ใช้ค่าเดิม
-      const fallbackValue =
-        device.last_value !== null ? device.last_value : false;
+      await logConnectionChange(device, 'disconnected');
 
       await Device.update(
-        {
-          last_error_at: now
-        },
+        { last_error_at: now },
         { where: { id: device.id } }
       );
 
-      // ❗ ยัง log ตาม interval (ค่าเดิม)
       await DeviceLog.create({
         device_id: device.id,
         value: fallbackValue,
         created_at: now
       });
-
-      console.error(
-        `[PLC FAIL] ${device.name} (${device.plc_address}) ` +
-        `use last_value=${fallbackValue}`,
-        err.message
-      );
     }
-
   }, device.refresh_rate_ms);
-
   timers.set(device.id, timer);
 }
 
