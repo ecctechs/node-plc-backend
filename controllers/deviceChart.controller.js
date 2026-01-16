@@ -23,3 +23,15 @@ exports.getOnOffChart = async (req, res) => {
     res.status(500).json({ message: 'Cannot load chart data' });
   }
 };
+
+exports.getNumberChart = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { start, end } = req.query;
+
+    const data = await service.getNumberChart(id, start, end);
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};

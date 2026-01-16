@@ -62,3 +62,16 @@ exports.getOnOffChart = async (deviceId, start, end) => {
     }
   );
 };
+
+exports.getNumberChart = async (deviceId, start, end) => {
+  return DeviceLog.findAll({
+    where: {
+      device_id: deviceId,
+      created_at: {
+        [Op.between]: [start, end]
+      }
+    },
+    attributes: ['value', 'created_at'],
+    order: [['created_at', 'ASC']]
+  });
+};

@@ -11,6 +11,7 @@ router.get(
 );
 router.get('/status', controller.getDeviceStatus);
 router.get('/:id/chart/onoff', chartController.getOnOffChart);
+router.get('/:id/chart/number', chartController.getNumberChart);
 router.get('/', controller.getDevices);
 router.get('/:id', controller.getDeviceById);
 router.post('/', controller.createDevice);
