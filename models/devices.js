@@ -61,6 +61,12 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'CASCADE'
     });
 
+    Device.hasMany(models.DeviceLevelConfig, {
+      foreignKey: 'device_id',
+      as: 'levels',
+      onDelete: 'CASCADE'
+    });
+
     // (ของเดิมที่คุณมี)
     Device.hasMany(models.DeviceLog, {
       foreignKey: 'device_id',

@@ -19,6 +19,17 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false
       },
 
+      mode: {
+        type: DataTypes.STRING, // exact | criteria
+        allowNull: true
+      },
+
+      /* ===== Exact ===== */
+      exact_values: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+      },
+
       condition_type: {
         type: DataTypes.STRING,
         allowNull: false

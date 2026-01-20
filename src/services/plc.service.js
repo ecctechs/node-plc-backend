@@ -108,7 +108,9 @@ exports.readValue = async (device) => {
 
     case 'number':
     case 'number_gauge':
+    case 'level': 
       return exports.readNumber(device.plc_address);
+      
 
     default:
       throw new Error(
