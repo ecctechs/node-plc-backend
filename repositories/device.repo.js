@@ -1,12 +1,18 @@
-const { Device , sequelize , DeviceNumberConfig } = require('../models');
+const { Device , sequelize , DeviceNumberConfig , DeviceLevelConfig } = require('../models');
 const { QueryTypes } = require('sequelize');
 
 exports.findAll = async () => Device.findAll({
     include: [
       {
-        model: DeviceNumberConfig,
+        model: DeviceNumberConfig, 
         as: 'numberConfig',
         required: false   // ⭐ INNER JOIN
+      },
+      {
+        model: DeviceLevelConfig,
+        as: 'levels',
+        required: false,  // LEFT JOIN
+        order: [['level_index', 'ASC']]
       }
     ],
     order: [['id', 'ASC']]

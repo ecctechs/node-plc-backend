@@ -1,6 +1,6 @@
-const { DeviceLog , sequelize} = require('../models');
+const { DeviceLog , sequelize , DeviceLevelConfig} = require('../models');
 const { Op  } = require('sequelize');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes , Sequelize } = require('sequelize');
 
 exports.findAll = async ({
   device_name,
@@ -63,15 +63,49 @@ exports.getOnOffChart = async (deviceId, start, end) => {
   );
 };
 
-exports.getNumberChart = async (deviceId, start, end) => {
+// exports.getNumberChart = async (deviceId, start, end) => {
+//   return DeviceLog.findAll({
+//     where: {
+//       device_id: deviceId,
+//       created_at: {
+//         [Op.between]: [start, end]
+//       }
+//     },
+//     attributes: ['value', 'created_at'],
+//     order: [['created_at', 'ASC']]
+//   });
+// };
+
+exports.getDeviceLogs = async (deviceId, start, end) => {
   return DeviceLog.findAll({
     where: {
       device_id: deviceId,
-      created_at: {
-        [Op.between]: [start, end]
-      }
+      created_at: { [Op.between]: [start, end] }
     },
-    attributes: ['value', 'created_at'],
-    order: [['created_at', 'ASC']]
+    attributes: [
+      'value',
+      'created_at',
+      [
+        Sequelize.literal(`(
+          SELECT dcl.status
+          FROM device_connection_logs dcl
+          WHERE dcl.device_id = "DeviceLog"."device_id"
+            AND dcl.created_at <= "DeviceLog"."created_at"
+          ORDER BY dcl.created_at DESC
+          LIMIT 1
+        )`),
+        'connection_status'
+      ]
+    ],
+    order: [['created_at', 'ASC']],
+    raw: true
+  });
+};
+
+exports.getDeviceLevels = async (deviceId) => {
+  return DeviceLevelConfig.findAll({
+    where: { device_id: deviceId },
+    order: [['level_index', 'ASC']],
+    raw: true
   });
 };

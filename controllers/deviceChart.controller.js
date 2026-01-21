@@ -35,3 +35,27 @@ exports.getNumberChart = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+exports.getLevelChart = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const { start, end, include_raw } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({ message: 'start and end are required' });
+    }
+
+    const data = await service.getLevelChart(
+      id,
+      new Date(start),
+      new Date(end),
+      include_raw === 'true'
+    );
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
