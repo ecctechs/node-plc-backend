@@ -9,6 +9,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsmodbus": "^4.0.10",
+    "nodemailer": "^7.0.12",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7"

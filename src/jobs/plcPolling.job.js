@@ -3,10 +3,11 @@
 const {
   Device,
   DeviceLog,
-  DeviceConnectionLog   // ⭐ ADD
+  DeviceConnectionLog,
 } = require('../../models');
 
 const plcService = require('../services/plc.service');
+const alarmService = require('../services/alarm.service');
 
 // เก็บ timer ต่อ device
 const timers = new Map();
@@ -50,6 +51,8 @@ async function startDevicePolling(device) {
         device.data_display_type === 'onoff'
           ? (rawValue ? 1 : 0)
           : rawValue;
+
+      await alarmService.processAlarms(device, value);
 
       await logConnectionChange(device, 'connected');
 
