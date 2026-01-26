@@ -18,13 +18,21 @@ const transporter = nodemailer.createTransport({
 /**
  * ฟังก์ชันสำหรับส่งอีเมล
  */
-async function sendAlarmEmail(to, subject, html) {
+async function sendAlarmEmail(recipients, subject, htmlContent) {
   try {
+    // ตรวจสอบว่ามีผู้รับไหม
+    if (!recipients || (Array.isArray(recipients) && recipients.length === 0)) {
+      console.error('[EMAIL ERROR] No recipients specified');
+      return false;
+    }
+
     const info = await transporter.sendMail({
-        from: 'TTPLC Alarm" <techs@eccsolutions.co.th>', // ใช้ค่าที่ส่งได้แน่นอนไปก่อน
-        to: 'eccerp2568@gmail.com',
-        subject: subject,
-        html: html,
+      // แก้ไขเครื่องหมายคำพูดให้ถูกต้อง
+      from: '"PLC Alarm System" <techs@eccsolutions.co.th>', 
+      // แปลง Array เป็น String (comma separated) ถ้าจำเป็น
+      to: Array.isArray(recipients) ? recipients.join(', ') : recipients, 
+      subject: subject,
+      html: htmlContent, // ใช้ตัวแปรที่รับมาจาก Parameters
     });
 
     console.log('[EMAIL SENT] Message ID: %s', info.messageId);

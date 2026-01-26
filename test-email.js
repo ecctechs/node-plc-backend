@@ -6,19 +6,18 @@ async function testEmail() {
   console.log("--- Starting Email Test ---");
 
   // คอนฟิกตามที่คุณให้มา
-  const transporter = nodemailer.createTransport({
-    host: 'mail.eccsolutions.co.th',
-    port: 587,
-    secure: false, // ใช้ false สำหรับ STARTTLS (Port 587)
-    auth: {
-      user: 'techs@eccsolutions.co.th',
-      pass: 'T4ch@ECC!solutions',
-    },
-    tls: {
-      rejectUnauthorized: false // ข้ามการเช็คใบรับรอง SSL ชั่วคราว
-    }
-  });
-  
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'mail.eccsolutions.co.th',
+  port: process.env.EMAIL_PORT || 587,
+  secure: false, // ใช้ false สำหรับ port 587 (STARTTLS)
+  auth: {
+    user: process.env.EMAIL_USER || 'techs@eccsolutions.co.th',
+    pass: process.env.EMAIL_PASS || 'T4ch@ECC!solutions',
+  },
+  tls: {
+    rejectUnauthorized: false // ช่วยแก้ปัญหาใบรับรอง SSL ในบางเคส
+  }
+});
 
   try {
     const info = await transporter.sendMail({

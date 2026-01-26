@@ -55,6 +55,6 @@ exports.findEventsByDevice = (deviceId) =>
         attributes: ['name','condition_type','min_value','max_value'] // เลือก field ของ rule ที่ต้องการ
       }
     ],
-    attributes: ['id', 'device_id', 'alarm_rule_id','event_type', 'created_at' , 'value'],
+    attributes: ['created_at','value','event_type'],
     order: [['created_at', 'DESC']]
   });

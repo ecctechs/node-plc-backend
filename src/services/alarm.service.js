@@ -39,18 +39,25 @@ async function processAlarms(device, currentValue) {
     const currentState = rule.state; // ข้อมูลจากตาราง device_alarm_states
     const now = new Date();
 
+
     // กรณีที่ 1: เกิด Alarm ใหม่ (Trigger)
     // เงื่อนไข: ค่าเข้าเกณฑ์ และ (ยังไม่เคยมี State หรือ State ปัจจุบันคือยังไม่ Active)
     if (isTriggered && (!currentState || !currentState.is_active)) {
+
       await sequelize.transaction(async (t) => {
-        // อัปเดตหรือสร้าง State
-        await DeviceAlarmState.upsert({
-          device_id: device.id,
-          alarm_rule_id: rule.id,
-          is_active: true,
-          last_triggered_at: now,
-          last_value: currentValue
-        }, { transaction: t });
+        const [state, created] = await DeviceAlarmState.findOrCreate({
+          where: { alarm_rule_id: rule.id, device_id: device.id },
+          defaults: { is_active: true, last_triggered_at: now, last_value: currentValue },
+          transaction: t
+        });
+
+        if (!created) {
+          await state.update({
+            is_active: true,
+            last_triggered_at: now,
+            last_value: currentValue
+          }, { transaction: t });
+        }
 
         // บันทึก Event ขา Trigger
         await DeviceAlarmEvent.create({
@@ -64,7 +71,8 @@ async function processAlarms(device, currentValue) {
         
         // TODO: ส่ง Email แจ้งเตือนที่นี่หาก rule.notify_email เป็น true
         // ⭐ ส่วนส่งอีเมลแจ้งเตือน
-        if (rule.notify_email && rule.email_recipients && rule.email_recipients.length > 0) {
+        if (rule.notify_email && rule.email_recipients?.length > 0) {
+
           const subject = `[ALARM] ${rule.severity.toUpperCase()}: ${device.name} - ${rule.name}`;
           const html = `
             <h3>Alarm Triggered</h3>
@@ -103,6 +111,38 @@ async function processAlarms(device, currentValue) {
 
         console.log(`[ALARM RECOVERED] ${device.name}: ${rule.name}`);
       });
+    }
+
+    // --- กรณีที่ 3: ⭐ เพิ่มใหม่ - ส่งแจ้งเตือนซ้ำ (Repeat Alarm) ---
+    // เงื่อนไข: ยังผิดปกติอยู่ AND ใน DB สถานะคือ Active AND ตั้งค่าให้ส่งซ้ำไว้
+    else if (isTriggered && currentState && currentState.is_active && rule.repeat_interval_sec > 0) {
+      
+      const lastTriggered = new Date(currentState.last_triggered_at);
+      const secondsSinceLastNotify = Math.floor((now - lastTriggered) / 1000);
+
+      // ถ้าเวลาที่ผ่านไป มากกว่าหรือเท่ากับ interval ที่ตั้งไว้ (เช่น 900 วินาที = 15 นาที)
+      if (secondsSinceLastNotify >= rule.repeat_interval_sec) {
+        
+        // อัปเดตเวลา last_triggered_at เพื่อเริ่มนับรอบใหม่
+        await DeviceAlarmState.update(
+          { last_triggered_at: now }, 
+          { where: { id: currentState.id } }
+        );
+
+        if (rule.notify_email && rule.email_recipients?.length > 0) {
+          const subject = `[REMINDER ALARM] ${rule.severity.toUpperCase()}: ${device.name} - ${rule.name}`;
+          const html = `
+            <h3 style="color: red;">Alarm Still Active (Repeat Notification)</h3>
+            <p><strong>Device:</strong> ${device.name}</p>
+            <p><strong>Alarm:</strong> ${rule.name}</p>
+            <p><strong>Value:</strong> ${currentValue}</p>
+            <p><strong>Active since:</strong> ${lastTriggered.toLocaleString()}</p>
+            <p>แจ้งเตือนซ้ำทุกๆ ${rule.repeat_interval_sec / 60} นาที</p>
+          `;
+          sendAlarmEmail(rule.email_recipients, subject, html);
+          console.log(`[REPEAT ALARM] Sent notification for ${rule.name}`);
+        }
+      }
     }
   }
 }

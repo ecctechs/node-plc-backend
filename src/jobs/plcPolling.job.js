@@ -11,56 +11,50 @@ const alarmService = require('../services/alarm.service');
 
 // เก็บ timer ต่อ device
 const timers = new Map();
+const connectionStates = new Map();
 
 /**
  * log connection change (เฉพาะตอนสถานะเปลี่ยน)
  */
-async function logConnectionChange(device, newStatus) {   // ⭐ ADD
-  if (device._lastConnectionStatus === newStatus) return;
+async function logConnectionChange(deviceId, deviceName, newStatus) {
+  // ดึงสถานะเดิมจาก Map แทนการดึงจาก device object
+  const lastStatus = connectionStates.get(deviceId);
+  
+  if (lastStatus === newStatus) return;
 
   await DeviceConnectionLog.create({
-    device_id: device.id,
+    device_id: deviceId,
     status: newStatus
   });
 
-  device._lastConnectionStatus = newStatus;
+  // บันทึกสถานะใหม่ลง Map
+  connectionStates.set(deviceId, newStatus);
 
   console.log(
-    `[CONNECTION] ${device.name} → ${newStatus.toUpperCase()}`
+    `[CONNECTION] ${deviceName} → ${newStatus.toUpperCase()}`
   );
 }
-
 /**
  * เริ่ม polling สำหรับ device ตัวเดียว
  */
 async function startDevicePolling(device) {
   if (timers.has(device.id)) return;
 
-  device._lastConnectionStatus = null;   // ⭐ ADD (in-memory guard)
+  // เคลียร์สถานะใน Map เมื่อเริ่ม polling ใหม่
+  connectionStates.set(device.id, null); 
 
   const timer = setInterval(async () => {
     const now = new Date();
-    let readSuccess = false;
-
+    
     try {
       const rawValue = await plcService.readValue(device);
-      readSuccess = true;
+      const value = device.data_display_type === 'onoff' ? (rawValue ? 1 : 0) : rawValue;
 
-      // แปลง on/off → number
-      const value =
-        device.data_display_type === 'onoff'
-          ? (rawValue ? 1 : 0)
-          : rawValue;
-
-      await alarmService.processAlarms(device, value);
-
-      await logConnectionChange(device, 'connected');
+      // ⭐ ส่ง ID และ Name เข้าไปแทน Object ทั้งตัว
+      await logConnectionChange(device.id, device.name, 'connected');
 
       await Device.update(
-        {
-          last_value: value,
-          last_seen_at: now
-        },
+        { last_value: value, last_seen_at: now },
         { where: { id: device.id } }
       );
 
@@ -70,16 +64,16 @@ async function startDevicePolling(device) {
         created_at: now
       });
 
-      // cache
+      // เรียก Alarm Service ปกติ
+      await alarmService.processAlarms(device, value);
+
       device.last_value = value;
 
     } catch (err) {
-      let fallbackValue =
-        device.last_value !== null
-          ? device.last_value
-          : 0; // ⭐ fallback เป็น number เสมอ
+      let fallbackValue = device.last_value !== null ? device.last_value : 0;
 
-      await logConnectionChange(device, 'disconnected');
+      // ⭐ แจ้ง Disconnected
+      await logConnectionChange(device.id, device.name, 'disconnected');
 
       await Device.update(
         { last_error_at: now },
@@ -93,6 +87,7 @@ async function startDevicePolling(device) {
       });
     }
   }, device.refresh_rate_ms);
+  
   timers.set(device.id, timer);
 }
 
