@@ -59,6 +59,10 @@ module.exports = {
 
       unique: {
         type: Sequelize.STRING
+      },
+      first_detected_at: {
+        type: Sequelize.DATE,
+        allowNull: true
       }
     });
 

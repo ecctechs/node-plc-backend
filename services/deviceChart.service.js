@@ -24,49 +24,92 @@ exports.getNumberChart = async (deviceId, start, end) => {
 /**
  * map value -> level
  */
+// function mapValueToLevel(value, levels) {
+//   for (const level of levels) {
+
+//     // ===== EXACT =====
+//   if (level.mode === 'exact') {
+//     const exacts = (level.exact_values || []).map(v => Number(v));
+//     if (exacts.includes(Number(value))) {
+//       return level;
+//     }
+//   }
+
+//     // ===== CRITERIA =====
+//     if (level.mode === 'criteria') {
+//       const min = level.min_value;
+//       const max = level.max_value;
+
+//       switch (level.condition_type) {
+//         case 'MT':
+//           if (value > min) return level;
+//           break;
+//         case 'MTE':
+//           if (value >= min) return level;
+//           break;
+//         case 'LT':
+//           if (value < max) return level;
+//           break;
+//         case 'LTE':
+//           if (value <= max) return level;
+//           break;
+//         case 'BTW':
+//           if (
+//             (level.include_min ? value >= min : value > min) &&
+//             (level.include_max ? value <= max : value < max)
+//           ) {
+//             return level;
+//           }
+//           break;
+//       }
+//     }
+//   }
+
+//   return null;
+// }
 function mapValueToLevel(value, levels) {
   for (const level of levels) {
 
     // ===== EXACT =====
-  if (level.mode === 'exact') {
-    const exacts = (level.exact_values || []).map(v => Number(v));
-    if (exacts.includes(Number(value))) {
-      return level;
+    if (level.mode === 'exact') {
+      const exacts = (level.exact_values || []).map(Number);
+      if (exacts.includes(Number(value))) return level;
     }
-  }
 
-    // ===== CRITERIA =====
     if (level.mode === 'criteria') {
       const min = level.min_value;
       const max = level.max_value;
 
       switch (level.condition_type) {
         case 'MT':
-          if (value > min) return level;
+          if (min !== null && value > min) return level;
           break;
+
         case 'MTE':
-          if (value >= min) return level;
+          if (min !== null && value >= min) return level;
           break;
+
         case 'LT':
-          if (value < max) return level;
+          if (min !== null && value < min) return level;
           break;
+
         case 'LTE':
-          if (value <= max) return level;
+          if (min !== null && value <= min) return level;
           break;
+
         case 'BTW':
           if (
+            min !== null && max !== null &&
             (level.include_min ? value >= min : value > min) &&
             (level.include_max ? value <= max : value < max)
-          ) {
-            return level;
-          }
+          ) return level;
           break;
       }
     }
   }
-
   return null;
 }
+
 
 
 exports.getLevelChart = async (deviceId, start, end, includeRaw) => {
