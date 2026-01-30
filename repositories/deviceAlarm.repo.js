@@ -42,7 +42,7 @@ exports.createEvent = (data) =>
 
 exports.findEventsByDevice = (deviceId) =>
   DeviceAlarmEvent.findAll({
-    where: { device_id: deviceId },
+    // where: { device_id: deviceId },
     include: [
       {
         model: Device,
