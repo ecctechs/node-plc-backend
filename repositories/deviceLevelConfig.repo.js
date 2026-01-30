@@ -1,14 +1,20 @@
-// repositories/deviceLevelConfig.repo.js
 const { DeviceLevelConfig } = require('../models');
 
-exports.findByDevice = (deviceId) =>
+// ⭐ เปลี่ยนจาก device_id เป็น address_id
+exports.findByAddressId = (addressId) =>
   DeviceLevelConfig.findAll({
-    where: { device_id: deviceId },
+    where: { address_id: addressId },
     order: [['level_index', 'ASC']]
   });
 
 exports.create = (data) =>
   DeviceLevelConfig.create(data);
+
+// เพิ่มฟังก์ชันสำหรับลบยกชุด (มีประโยชน์มากตอน Update ข้อมูลใหม่ทั้งหมด)
+exports.removeByAddressId = (addressId) =>
+  DeviceLevelConfig.destroy({
+    where: { address_id: addressId }
+  });
 
 exports.update = async (id, data) => {
   const row = await DeviceLevelConfig.findByPk(id);

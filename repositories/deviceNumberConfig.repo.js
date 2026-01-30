@@ -1,17 +1,20 @@
 const { DeviceNumberConfig } = require('../models');
 
-exports.findByDeviceId = (deviceId) =>
-  DeviceNumberConfig.findOne({ where: { device_id: deviceId } });
+// ⭐ เปลี่ยนจาก device_id เป็น address_id
+exports.findByAddressId = (addressId) =>
+  DeviceNumberConfig.findOne({ where: { address_id: addressId } });
 
 exports.create = (data) =>
   DeviceNumberConfig.create(data);
 
-exports.updateByDeviceId = (deviceId, data) =>
+// ⭐ ค้นหาและอัปเดตผ่าน address_id
+exports.updateByAddressId = (addressId, data) =>
   DeviceNumberConfig.update(data, {
-    where: { device_id: deviceId }
+    where: { address_id: addressId }
   });
 
-exports.removeByDeviceId = (deviceId) =>
+// ⭐ ค้นหาและลบผ่าน address_id
+exports.removeByAddressId = (addressId) =>
   DeviceNumberConfig.destroy({
-    where: { device_id: deviceId }
+    where: { address_id: addressId }
   });

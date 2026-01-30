@@ -6,10 +6,13 @@ exports.list = async () => repo.findAll();
 exports.getById = async (id) => repo.findById(id);
 
 exports.create = async (payload) => {
-  const { name, device_type, data_display_type , plc_address, refresh_rate_ms } = payload;
-  if (!name || !device_type || !plc_address) {
-    throw new Error('name, device_type, plc_address are required');
+  // ⭐ รับ addresses มาเป็น Array
+  const { name, device_type, refresh_rate_ms, addresses } = payload;
+  
+  if (!name || !device_type || !addresses || !addresses.length) {
+    throw new Error('Name, device_type, and at least one address are required');
   }
+
   const exists = await repo.findByName(name);
   if (exists) {
     throw new Error(`Device name "${name}" already exists`);
@@ -18,13 +21,11 @@ exports.create = async (payload) => {
   const device = await repo.create({
     name,
     device_type,
-    data_display_type,
-    plc_address,
-    refresh_rate_ms
+    refresh_rate_ms,
+    addresses // ส่งเข้าไปที่ repo เพื่อจัดการ transaction
   });
 
   await reloadPolling();
-
   return device;
 };
 
@@ -39,7 +40,8 @@ exports.update = async (id, payload) => {
     }
   }
 
-  const allowed = ['name','device_type','plc_address','refresh_rate_ms','is_active'];
+  // ⭐ เพิ่ม addresses เข้าไปใน Allowed Fields
+  const allowed = ['name', 'device_type', 'refresh_rate_ms', 'is_active', 'addresses'];
   const data = {};
   for (const k of allowed) {
     if (payload[k] !== undefined) data[k] = payload[k];
@@ -48,7 +50,6 @@ exports.update = async (id, payload) => {
   const updated = await repo.update(id, data);
 
   await reloadPolling(); 
-
   return updated;
 };
 
@@ -59,7 +60,6 @@ exports.remove = async (id) => {
   const result = await repo.remove(id);
 
   await reloadPolling(); 
-
   return result;
 };
 
@@ -67,23 +67,35 @@ exports.getStatusList = async () => {
   const rows = await repo.getStatusWithLatestValue();
   const now = Date.now();
 
-  return rows.map(r => {
-    const lastSeen = r.last_seen_at
-      ? new Date(r.last_seen_at).getTime()
-      : null;
+  // ⭐ จับกลุ่มข้อมูล (Group by Device) เพราะ rows ที่ได้จาก Repo จะมีหลายบรรทัดต่อ 1 Device
+  const deviceGroups = {};
 
-    const timeoutMs = r.refresh_rate_ms * 2;
+  rows.forEach(r => {
+    if (!deviceGroups[r.device_id]) {
+      const lastSeen = r.last_seen_at ? new Date(r.last_seen_at).getTime() : null;
+      // ประเมิน Connection ที่ระดับ Device (แม่)
+      const timeoutMs = (r.refresh_rate_ms || 1000) * 3; // เผื่อ latency เป็น 3 เท่า
+      const connected = lastSeen !== null && (now - lastSeen) <= timeoutMs;
 
-    const connected =
-      lastSeen !== null && (now - lastSeen) <= timeoutMs;
+      deviceGroups[r.device_id] = {
+        id: r.device_id,
+        name: r.device_name,
+        connected,
+        last_seen_at: r.last_seen_at,
+        addresses: [] // เตรียมใส่ลูกๆ
+      };
+    }
 
-    return {
-      id: r.id,
-      name: r.name,
-      last_value: r.value ?? null, // ถ้าไม่มี log ให้ถือ OFF
-      connected,
-      last_seen_at: r.last_seen_at,
+    // เพิ่มข้อมูล Address ลูกเข้าไปใน Device นั้นๆ
+    deviceGroups[r.device_id].addresses.push({
+      address_id: r.address_id,
+      plc_address: r.plc_address,
+      label: r.label,
+      data_type: r.data_type,
+      last_value: r.last_value,
       value_updated_at: r.value_updated_at
-    };
+    });
   });
+
+  return Object.values(deviceGroups);
 };

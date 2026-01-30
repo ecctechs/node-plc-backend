@@ -4,9 +4,14 @@ module.exports = (sequelize, DataTypes) => {
   const DeviceNumberConfig = sequelize.define(
     'DeviceNumberConfig',
     {
-      device_id: {
+      // device_id: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: false
+      // },
+
+      address_id: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false // เปลี่ยนมาบังคับที่ฟิลด์นี้แทน
       },
 
       decimal_places: {
@@ -51,9 +56,9 @@ module.exports = (sequelize, DataTypes) => {
 
   DeviceNumberConfig.associate = (models) => {
     // ⭐ Number Config → Device
-    DeviceNumberConfig.belongsTo(models.Device, {
-      foreignKey: 'device_id',
-      as: 'device'
+    DeviceNumberConfig.belongsTo(models.DeviceAddress, { 
+        foreignKey: 'address_id', 
+        as: 'address' 
     });
   };
 

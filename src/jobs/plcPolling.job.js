@@ -121,25 +121,25 @@ async function startPolling() {
  * reload polling (เรียกเมื่อ add/edit/delete device)
  */
 async function reloadPolling() {
-  console.log('Reload PLC Polling');
+  // console.log('Reload PLC Polling');
 
-  const devices = await Device.findAll({
-    where: { is_active: true }
-  });
+  // const devices = await Device.findAll({
+  //   where: { is_active: true }
+  // });
 
-  const activeIds = new Set(devices.map(d => d.id));
+  // const activeIds = new Set(devices.map(d => d.id));
 
-  // หยุด device ที่ถูกปิด / ลบ
-  for (const id of timers.keys()) {
-    if (!activeIds.has(id)) {
-      stopDevicePolling(id);
-    }
-  }
+  // // หยุด device ที่ถูกปิด / ลบ
+  // for (const id of timers.keys()) {
+  //   if (!activeIds.has(id)) {
+  //     stopDevicePolling(id);
+  //   }
+  // }
 
-  // เริ่ม device ใหม่
-  for (const device of devices) {
-    await startDevicePolling(device);
-  }
+  // // เริ่ม device ใหม่
+  // for (const device of devices) {
+  //   await startDevicePolling(device);
+  // }
 }
 
 module.exports = {

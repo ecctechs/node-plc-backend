@@ -39,9 +39,9 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   DeviceAlarmState.associate = (models) => {
-    DeviceAlarmState.belongsTo(models.Device, {
-      foreignKey: 'device_id',
-      as: 'device'
+    DeviceAlarmState.belongsTo(models.DeviceAddress, { 
+        foreignKey: 'address_id', 
+        as: 'address' 
     });
 
     DeviceAlarmState.belongsTo(models.DeviceAlarmRule, {

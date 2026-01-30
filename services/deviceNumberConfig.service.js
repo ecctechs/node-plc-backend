@@ -1,26 +1,30 @@
 const repo = require('../repositories/deviceNumberConfig.repo');
-const deviceRepo = require('../repositories/device.repo');
+const addressRepo = require('../repositories/deviceAddress.repo'); // สมมติว่าคุณมี repo สำหรับ address แล้ว
 
-exports.get = async (deviceId) => {
-  const device = await deviceRepo.findById(deviceId);
-  if (!device) throw new Error('Device not found');
+// ⭐ เปลี่ยนจาก deviceId เป็น addressId ทั้งหมด
+exports.get = async (addressId) => {
+  const address = await addressRepo.findById(addressId);
+  if (!address) throw new Error('Address not found');
 
-  return repo.findByDeviceId(deviceId);
+  return repo.findByAddressId(addressId);
 };
 
-exports.create = async (deviceId, payload) => {
-  const device = await deviceRepo.findById(deviceId);
-  if (!device) throw new Error('Device not found');
+exports.create = async (addressId, payload) => {
+  // 1. ตรวจสอบว่า Address นี้มีอยู่จริงไหม
+  const address = await addressRepo.findById(addressId);
+  if (!address) throw new Error('Address not found');
 
-  if (device.data_display_type !== 'number' && device.data_display_type !== 'number_gauge') {
-    throw new Error('Device is not number display type');
+  // 2. ตรวจสอบว่า Address นี้เป็นประเภท number หรือไม่
+  if (address.data_type !== 'number') {
+    throw new Error('This address is not a number data type');
   }
 
-  const exists = await repo.findByDeviceId(deviceId);
-  if (exists) throw new Error('Number config already exists');
+  // 3. ตรวจสอบว่ามี Config อยู่แล้วหรือยัง
+  const exists = await repo.findByAddressId(addressId);
+  if (exists) throw new Error('Number config already exists for this address');
 
   return repo.create({
-    device_id: deviceId,
+    address_id: addressId, // ⭐ เปลี่ยนฟิลด์เป็น address_id
     decimal_places: payload.decimal_places ?? 0,
     scale: payload.scale ?? 1,
     offset: payload.offset ?? 0,
@@ -30,8 +34,8 @@ exports.create = async (deviceId, payload) => {
   });
 };
 
-exports.update = async (deviceId, payload) => {
-  const exists = await repo.findByDeviceId(deviceId);
+exports.update = async (addressId, payload) => {
+  const exists = await repo.findByAddressId(addressId);
   if (!exists) throw new Error('Number config not found');
 
   const allowed = [
@@ -48,13 +52,13 @@ exports.update = async (deviceId, payload) => {
     if (payload[k] !== undefined) data[k] = payload[k];
   }
 
-  await repo.updateByDeviceId(deviceId, data);
-  return repo.findByDeviceId(deviceId);
+  await repo.updateByAddressId(addressId, data);
+  return repo.findByAddressId(addressId);
 };
 
-exports.remove = async (deviceId) => {
-  const exists = await repo.findByDeviceId(deviceId);
+exports.remove = async (addressId) => {
+  const exists = await repo.findByAddressId(addressId);
   if (!exists) throw new Error('Number config not found');
 
-  await repo.removeByDeviceId(deviceId);
+  await repo.removeByAddressId(addressId);
 };

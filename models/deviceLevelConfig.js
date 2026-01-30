@@ -1,74 +1,29 @@
 'use strict';
-
 module.exports = (sequelize, DataTypes) => {
-  const DeviceLevelConfig = sequelize.define(
-    'DeviceLevelConfig',
-    {
-      device_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-      },
-
-      level_index: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-      },
-
-      label: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-
-      mode: {
-        type: DataTypes.STRING, // exact | criteria
-        allowNull: true
-      },
-
-      /* ===== Exact ===== */
-      exact_values: {
-        type: DataTypes.FLOAT,
-        allowNull: true
-      },
-
-      condition_type: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-
-      min_value: {
-        type: DataTypes.FLOAT,
-        allowNull: true
-      },
-
-      max_value: {
-        type: DataTypes.FLOAT,
-        allowNull: true
-      },
-
-      include_min: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true
-      },
-
-      include_max: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-      }
+  const DeviceLevelConfig = sequelize.define('DeviceLevelConfig', {
+    address_id: { type: DataTypes.INTEGER, allowNull: false },
+    level_index: { type: DataTypes.INTEGER, defaultValue: 0 },
+    label: { type: DataTypes.TEXT, allowNull: false },
+    condition_type: { type: DataTypes.TEXT, allowNull: false }, // LTE, GTE, BTW
+    min_value: { type: DataTypes.FLOAT, allowNull: true },
+    max_value: { type: DataTypes.FLOAT, allowNull: true },
+    // ⭐ ฟิลด์เพิ่มเติมจาก Payload เดิม
+    mode: { type: DataTypes.TEXT, defaultValue: 'range' }, // range, exact
+    exact_values: {
+      // สำหรับ PostgreSQL ต้องใช้ DataTypes.ARRAY
+      type: DataTypes.ARRAY(DataTypes.INTEGER), 
+      allowNull: true,
+      defaultValue: []
     },
-    {
-      tableName: 'device_level_configs', // ⭐ ชื่อตารางที่ถูกต้อง
-      underscored: true,
-      timestamps: true
-    }
-  );
+    include_min: { type: DataTypes.BOOLEAN, defaultValue: true },
+    include_max: { type: DataTypes.BOOLEAN, defaultValue: true },
+  }, {
+    tableName: 'device_level_configs',
+    underscored: true
+  });
 
   DeviceLevelConfig.associate = (models) => {
-    DeviceLevelConfig.belongsTo(models.Device, {
-      foreignKey: 'device_id',
-      as: 'device',
-      onDelete: 'CASCADE'
-    });
+    DeviceLevelConfig.belongsTo(models.DeviceAddress, { foreignKey: 'address_id', as: 'address' });
   };
-
   return DeviceLevelConfig;
 };

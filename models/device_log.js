@@ -11,8 +11,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   DeviceLog.associate = (models) => {
-    DeviceLog.belongsTo(models.Device, {
-      foreignKey: 'device_id'
+    DeviceLog.belongsTo(models.DeviceAddress, { 
+        foreignKey: 'address_id', 
+        as: 'address' 
     });
   };
 
