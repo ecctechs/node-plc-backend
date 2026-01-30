@@ -47,27 +47,27 @@ async function startDevicePolling(device) {
     const now = new Date();
     
     try {
-      const rawValue = await plcService.readValue(device);
-      const value = device.data_display_type === 'onoff' ? (rawValue ? 1 : 0) : rawValue;
+      // const rawValue = await plcService.readValue(device);
+      // const value = device.data_display_type === 'onoff' ? (rawValue ? 1 : 0) : rawValue;
 
-      // ⭐ ส่ง ID และ Name เข้าไปแทน Object ทั้งตัว
-      await logConnectionChange(device.id, device.name, 'connected');
+      // // ⭐ ส่ง ID และ Name เข้าไปแทน Object ทั้งตัว
+      // await logConnectionChange(device.id, device.name, 'connected');
 
-      await Device.update(
-        { last_value: value, last_seen_at: now },
-        { where: { id: device.id } }
-      );
+      // await Device.update(
+      //   { last_value: value, last_seen_at: now },
+      //   { where: { id: device.id } }
+      // );
 
-      await DeviceLog.create({
-        device_id: device.id,
-        value,
-        created_at: now
-      });
+      // await DeviceLog.create({
+      //   device_id: device.id,
+      //   value,
+      //   created_at: now
+      // });
 
-      // เรียก Alarm Service ปกติ
-      await alarmService.processAlarms(device, value);
+      // // เรียก Alarm Service ปกติ
+      // await alarmService.processAlarms(device, value);
 
-      device.last_value = value;
+      // device.last_value = value;
 
     } catch (err) {
       let fallbackValue = device.last_value !== null ? device.last_value : 0;
