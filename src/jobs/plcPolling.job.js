@@ -51,7 +51,7 @@ async function startDevicePolling(device) {
       // const value = device.data_display_type === 'onoff' ? (rawValue ? 1 : 0) : rawValue;
 
       // // ⭐ ส่ง ID และ Name เข้าไปแทน Object ทั้งตัว
-      // await logConnectionChange(device.id, device.name, 'connected');
+       await logConnectionChange(device.id, device.name, 'connected');
 
       // await Device.update(
       //   { last_value: value, last_seen_at: now },
