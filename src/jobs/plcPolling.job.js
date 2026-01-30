@@ -75,16 +75,16 @@ async function startDevicePolling(device) {
       // ⭐ แจ้ง Disconnected
       await logConnectionChange(device.id, device.name, 'disconnected');
 
-      await Device.update(
-        { last_error_at: now },
-        { where: { id: device.id } }
-      );
+      // await Device.update(
+      //   { last_error_at: now },
+      //   { where: { id: device.id } }
+      // );
 
-      await DeviceLog.create({
-        device_id: device.id,
-        value: fallbackValue,
-        created_at: now
-      });
+      // await DeviceLog.create({
+      //   device_id: device.id,
+      //   value: fallbackValue,
+      //   created_at: now
+      // });
     }
   }, device.refresh_rate_ms);
   
