@@ -39,7 +39,7 @@ function connectPLC() {
   socket.connect({ host: PLC_HOST, port: PLC_PORT });
 }
 
-connectPLC();
+// connectPLC();
 
 /* ===============================
  * PARSE ADDRESS

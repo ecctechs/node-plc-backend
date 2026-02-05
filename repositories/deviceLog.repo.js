@@ -102,9 +102,9 @@ exports.getDeviceLogs = async (deviceId, start, end) => {
   });
 };
 
-exports.getDeviceLevels = async (deviceId) => {
+exports.getDeviceLevels = async (address_id) => {
   return DeviceLevelConfig.findAll({
-    where: { device_id: deviceId },
+    where: { address_id: address_id },
     order: [['level_index', 'ASC']],
     raw: true
   });

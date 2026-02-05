@@ -23,11 +23,15 @@ exports.syncLevels = async (addressId, levelsArray) => {
   await repo.removeByAddressId(addressId);
 
   const saved = [];
-  for (const item of levelsArray) {
+  for (let i = 0; i < levelsArray.length; i++) {
+    const item = levelsArray[i];
+
     const row = await repo.create({
       ...item,
-      address_id: addressId // ผูกข้อมูลกับ Address แทน Device
+      level_index: i,          // ✅ เพิ่มตรงนี้
+      address_id: addressId
     });
+
     saved.push(row);
   }
   return saved;

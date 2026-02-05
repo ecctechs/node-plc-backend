@@ -15,8 +15,9 @@ exports.create = async (addressId, payload) => {
   if (!address) throw new Error('Address not found');
 
   // 2. ตรวจสอบว่า Address นี้เป็นประเภท number หรือไม่
-  if (address.data_type !== 'number') {
-    throw new Error('This address is not a number data type');
+  const allowedTypes = ['number', 'number_gauge']; // เพิ่ม range/level เผื่อไว้ตาม UI ที่คุณใช้
+  if (!allowedTypes.includes(address.data_type)) {
+    throw new Error(`This address type (${address.data_type}) does not support number configuration`);
   }
 
   // 3. ตรวจสอบว่ามี Config อยู่แล้วหรือยัง

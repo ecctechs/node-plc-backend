@@ -1,4 +1,5 @@
 const repo = require('../repositories/deviceLog.repo');
+const repo_device = require('../repositories/device.repo');
 
 exports.getOnOffChart = async (deviceId, start, end) => {
   const rows = await repo.getOnOffChart(deviceId, start, end);
@@ -112,9 +113,10 @@ function mapValueToLevel(value, levels) {
 
 
 
-exports.getLevelChart = async (deviceId, start, end, includeRaw) => {
-  const logs   = await repo.getDeviceLogs(deviceId, start, end);
-  const levels = await repo.getDeviceLevels(deviceId);
+exports.getLevelChart = async (address_id, start, end, includeRaw) => {
+  const para = { address_id, start, end };
+  const logs   = await repo_device.findByAddressAndDate(para);
+  const levels = await repo.getDeviceLevels(address_id);
 
   const series = logs.map(log => {
     const level = mapValueToLevel(log.value, levels);
@@ -124,12 +126,13 @@ exports.getLevelChart = async (deviceId, start, end, includeRaw) => {
       y: level ? level.level_index : null,
       label: level ? level.label : 'UNKNOWN',
       ...(includeRaw ? { value: log.value } : {}),
-      connected: log.connection_status === 'connected'
+      // connected: log.connection_status === 'connected' 
+      connected: log.status === 1 ? 'connected' : false  // ถ้า เท่ากับ 1 === connected 
     };
   });
 
   return {
-    device_id: deviceId,
+    address_id: address_id,
     levels: levels.map(l => ({
       level_index: l.level_index,
       label: l.label

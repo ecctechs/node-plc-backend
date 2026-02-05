@@ -1,5 +1,6 @@
 const repo = require('../repositories/device.repo');
-const { reloadPolling } = require('../src/jobs/plcPolling.job');
+const { reloadPolling } = require('../poll');
+
 
 exports.list = async () => repo.findAll();
 
@@ -22,7 +23,7 @@ exports.create = async (payload) => {
     name,
     device_type,
     refresh_rate_ms,
-    addresses // ส่งเข้าไปที่ repo เพื่อจัดการ transaction
+    addresses 
   });
 
   await reloadPolling();
@@ -98,4 +99,12 @@ exports.getStatusList = async () => {
   });
 
   return Object.values(deviceGroups);
+};
+
+exports.getAllAddresses = async () => {
+  return await repo.findAllAddresses();
+};
+
+exports.getLogsByAddressAndDate = async (params) => {
+  return await repo.findByAddressAndDate(params);
 };

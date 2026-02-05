@@ -4,8 +4,9 @@ const service = require('../services/deviceAlarm.service');
 
 exports.create = async (req, res) => {
   try {
+    // ⭐ เปลี่ยนจาก deviceId เป็น addressId
     const data = await service.createAlarm(
-      req.params.deviceId,
+      req.params.addressId,
       req.body
     );
     res.json(data);
@@ -16,7 +17,8 @@ exports.create = async (req, res) => {
 
 exports.list = async (req, res) => {
   try {
-    const data = await service.listAlarms(req.params.deviceId);
+    // ⭐ เปลี่ยนจาก deviceId เป็น addressId
+    const data = await service.listAlarms(req.params.addressId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -25,10 +27,8 @@ exports.list = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const data = await service.getAlarm(
-      req.params.deviceId,
-      req.params.alarmId
-    );
+    // สำหรับราย ID เราใช้แค่ alarmId ก็เพียงพอ (ตาม Routes ใหม่)
+    const data = await service.getAlarm(req.params.alarmId);
     res.json(data);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -38,7 +38,6 @@ exports.getById = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const data = await service.updateAlarm(
-      req.params.deviceId,
       req.params.alarmId,
       req.body
     );
@@ -50,10 +49,7 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
-    const data = await service.deleteAlarm(
-      req.params.deviceId,
-      req.params.alarmId
-    );
+    const data = await service.deleteAlarm(req.params.alarmId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -62,7 +58,8 @@ exports.remove = async (req, res) => {
 
 exports.events = async (req, res) => {
   try {
-    const data = await service.listEvents(req.params.deviceId);
+    // ⭐ เปลี่ยนจาก deviceId เป็น addressId เพื่อดึง event ของจุดอ่านนั้น
+    const data = await service.listEvents(req.params.addressId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -80,7 +77,6 @@ exports.toggle = async (req, res) => {
     }
 
     const data = await service.toggleAlarm(
-      req.params.deviceId,
       req.params.alarmId,
       is_active
     );
@@ -88,5 +84,23 @@ exports.toggle = async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+exports.getHistoryAll = async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    const events = await service.getAllHistory(start, end);
+    const formatEvent = (events) => events.map(e => ({
+      id: e.id,
+      value: e.value,
+      event_type: e.event_type,
+      created_at: e.created_at,
+      rule: e.rule,    // ✅ เปลี่ยนจาก e.Rule เป็น e.rule
+      device: e.device // ⚠️ ถ้าแก้ Device เป็นตัวเล็ก ก็ต้องแก้ตรงนี้เป็น e.device
+    }));
+    res.json(formatEvent(events));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

@@ -6,20 +6,26 @@ module.exports = (sequelize, DataTypes) => {
     last_seen_at: { type: DataTypes.DATE },
     last_error_at: { type: DataTypes.DATE },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true }
-    // ❌ ลบ plc_address, data_display_type, last_value ออกแล้ว
   }, { 
     tableName: 'devices', 
     underscored: true 
   });
 
   Device.associate = (models) => {
-    // ⭐ หัวใจหลัก: 1 เครื่อง มีได้หลาย Address
+
+    // ⭐ Device -> Addresses
     Device.hasMany(models.DeviceAddress, { 
       as: 'addresses', 
       foreignKey: 'device_id',
-      onDelete: 'CASCADE' 
+      onDelete: 'CASCADE'
     });
-    Device.hasMany(models.DeviceConnectionLog, { as: 'connectionLogs', foreignKey: 'device_id' });
+
+    // ⭐ Device -> Connection Logs
+    Device.hasMany(models.DeviceConnectionLog, {
+      as: 'connectionLogs',
+      foreignKey: 'device_id'
+    });
   };
+
   return Device;
 };
