@@ -116,40 +116,40 @@ async function startDynamicPolling() {
 
 // ✅ 3. ฟังก์ชัน reloadPolling ตอนนี้จะทำงานได้แล้วเพราะเห็นตัวแปรข้างบน
 async function reloadPolling() {
-    console.log("🔄 System: Reloading configuration...");
-    if (isPlcConnected) {
-        await startDynamicPolling();
-    } else {
-        pollingIntervals.forEach(clearInterval);
-        pollingIntervals = [];
-        console.log("⚠️ System: Intervals cleared, waiting for PLC to reconnect.");
-    }
+    // console.log("🔄 System: Reloading configuration...");
+    // if (isPlcConnected) {
+    //     await startDynamicPolling();
+    // } else {
+    //     pollingIntervals.forEach(clearInterval);
+    //     pollingIntervals = [];
+    //     console.log("⚠️ System: Intervals cleared, waiting for PLC to reconnect.");
+    // }
 }
 
 async function readSingleAddress(plcAddr) {
-    // 1. ตรวจสอบการเชื่อมต่อ
-    if (!isPlcConnected || !client) {
-        throw new Error('PLC not connected');
-    }
+    // // 1. ตรวจสอบการเชื่อมต่อ
+    // if (!isPlcConnected || !client) {
+    //     throw new Error('PLC not connected');
+    // }
 
-    // 2. แปลง Address
-    const { address, isBit } = parsePlcAddress(plcAddr);
+    // // 2. แปลง Address
+    // const { address, isBit } = parsePlcAddress(plcAddr);
 
-    try {
-        let resp;
-        if (isBit) {
-            // อ่าน Coils (M, X, Y, SM)
-            resp = await client.readCoils(address, 1);
-            return resp.response._body.values[0] ? 1 : 0;
-        } else {
-            // อ่าน Holding Register (D)
-            resp = await client.readHoldingRegisters(address, 1);
-            return resp.response._body.values[0];
-        }
-    } catch (err) {
-        console.error(`❌ Single Read Error [${plcAddr}]:`, err.message);
-        throw err;
-    }
+    // try {
+    //     let resp;
+    //     if (isBit) {
+    //         // อ่าน Coils (M, X, Y, SM)
+    //         resp = await client.readCoils(address, 1);
+    //         return resp.response._body.values[0] ? 1 : 0;
+    //     } else {
+    //         // อ่าน Holding Register (D)
+    //         resp = await client.readHoldingRegisters(address, 1);
+    //         return resp.response._body.values[0];
+    //     }
+    // } catch (err) {
+    //     console.error(`❌ Single Read Error [${plcAddr}]:`, err.message);
+    //     throw err;
+    // }
 }
 
 function startPollWorker() {
