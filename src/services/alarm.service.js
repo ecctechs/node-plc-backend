@@ -3,6 +3,9 @@
 const { DeviceAlarmRule, DeviceAlarmState, DeviceAlarmEvent, sequelize } = require('../../models');
 const { sendAlarmEmail } = require('./email.service');
 
+/**
+ * ฟังก์ชันตรวจสอบเงื่อนไข (Condition Evaluator)
+ */
 function evaluateCondition(value, rule) {
   const min = rule.min_value;
   const max = rule.max_value;
@@ -17,9 +20,19 @@ function evaluateCondition(value, rule) {
   }
 }
 
-async function processAlarms(device, currentValue) {
+/**
+ * ฟังก์ชันหลักในการประมวลผล Alarm
+ * @param {Number} addressId - ID จากตาราง device_addresses
+ * @param {Number} deviceId - ID จากตาราง devices
+ * @param {Number} currentValue - ค่าที่อ่านได้จาก PLC
+ */
+async function processAlarms(addressId, deviceId, currentValue) {
+  // 1. ดึง Rules ที่ผูกกับ address_id นี้ และดึง State ปัจจุบันมาด้วย
   const rules = await DeviceAlarmRule.findAll({
-    where: { device_id: device.id, is_active: true },
+    where: { 
+      address_id: addressId, 
+      is_active: true 
+    },
     include: [{ model: DeviceAlarmState, as: 'state' }]
   });
 
@@ -28,79 +41,116 @@ async function processAlarms(device, currentValue) {
     const currentState = rule.state;
     const now = new Date();
 
-    // --- กรณีที่ 1: ตรวจพบความผิดปกติ (Trigger) ---
+    // --- กรณีที่ 1: ตรวจพบความผิดปกติ (TRIGGER) ---
     if (isTriggered) {
-      // ก) ถ้าสถานะปัจจุบันยังไม่ Active (เพิ่งเริ่มเสีย หรือเคย Recover ไปก่อนหน้านี้)
+      // ก) ถ้าสถานะปัจจุบันยังไม่ Active (เพิ่งเกิด หรือเคยคืนค่าไปแล้ว)
       if (!currentState || !currentState.is_active) {
         
-        // เช็คว่า "เคยส่งเมลล่าสุดไปเมื่อไหร่" (แม้จะ Recover ไปแล้วก็ตาม)
+        // เช็คระยะห่างการส่งเมลล่าสุดจาก last_triggered_at ใน State (ถ้ามี)
         const lastEmailTime = currentState?.last_triggered_at ? new Date(currentState.last_triggered_at) : null;
         const secondsSinceLastEmail = lastEmailTime ? Math.floor((now - lastEmailTime) / 1000) : null;
 
         await sequelize.transaction(async (t) => {
-          // 1. อัปเดตสถานะให้เป็น Active เสมอ (เพื่อบันทึก History)
+          // 1. อัปเดต/สร้างสถานะในตาราง DeviceAlarmState
+          // ระบุทั้ง address_id และ device_id ตาม Model ใหม่
           const [state, created] = await DeviceAlarmState.findOrCreate({
-            where: { alarm_rule_id: rule.id, device_id: device.id },
-            defaults: { is_active: true, last_triggered_at: now, last_value: currentValue },
+            where: { 
+              alarm_rule_id: rule.id, 
+              address_id: addressId 
+            },
+            defaults: { 
+              is_active: true, 
+              last_triggered_at: now, 
+              last_value: currentValue,
+              device_id: deviceId 
+            },
             transaction: t
           });
 
           if (!created) {
-            await state.update({ is_active: true, last_value: currentValue }, { transaction: t });
+            await state.update({ 
+              is_active: true, 
+              last_value: currentValue,
+              device_id: deviceId // เผื่อมีการย้าย Device
+            }, { transaction: t });
           }
 
-          // 2. บันทึก Event ลง History (บันทึกทุกครั้งที่เกิด 0 -> 1)
+          // 2. บันทึกประวัติเหตุการณ์ลงตาราง DeviceAlarmEvent
+          // เพิ่ม address_id ให้สอดคล้องกับ Model ใหม่ที่คุณสร้าง
           await DeviceAlarmEvent.create({
-            device_id: device.id, alarm_rule_id: rule.id,
-            event_type: 'TRIGGER', value: currentValue
+            device_id: deviceId, 
+            address_id: addressId,
+            alarm_rule_id: rule.id,
+            event_type: 'TRIGGER', 
+            value: currentValue
           }, { transaction: t });
 
-          // 3. เงื่อนไขการส่ง Email (กัน Spam จากค่าแกว่ง)
-          // ส่งเมลเมื่อ: (ไม่เคยส่งเลย) หรือ (ส่งครั้งล่าสุดเกิน 15 นาทีที่แล้ว)
+          // 3. จัดการเรื่องการแจ้งเตือน Email
           const shouldSendEmail = (secondsSinceLastEmail === null) || (secondsSinceLastEmail >= (rule.repeat_interval_sec || 900));
 
           if (shouldSendEmail && rule.notify_email && rule.email_recipients?.length > 0) {
-            // อัปเดตเวลาส่งเมลล่าสุด
+            // อัปเดตเวลาที่ส่งเมลล่าสุด
             await state.update({ last_triggered_at: now }, { transaction: t });
-
-            const subject = `[ALARM]  ${device.name} - ${rule.name}`;
-            const html = `<h3>Alarm Triggered</h3><p>Device: ${device.name}</p><p>Value: ${currentValue}</p>`;
+            
+            const subject = `[ALARM] ${rule.name}`;
+            const html = `
+              <h3>Alarm Triggered</h3>
+              <p><b>Rule:</b> ${rule.name}</p>
+              <p><b>Value:</b> ${currentValue}</p>
+              <p><b>Address ID:</b> ${addressId}</p>
+              <p><b>Device ID:</b> ${deviceId}</p>
+              <p><b>Time:</b> ${now.toLocaleString()}</p>
+            `;
             sendAlarmEmail(rule.email_recipients, subject, html);
-            console.log(`[ALARM EMAIL SENT] ${rule.name}`);
-          } else {
-            console.log(`[ALARM LOGGED] ${rule.name} - Email suppressed (Last sent ${secondsSinceLastEmail}s ago)`);
           }
         });
       }
-      // ข) ถ้า Active อยู่แล้ว (Repeat Alarm)
+      // ข) ถ้าสถานะ Active อยู่แล้ว (ตรวจสอบการแจ้งเตือนซ้ำ - Reminder)
       else if (currentState.is_active && rule.repeat_interval_sec > 0) {
         const lastTriggered = new Date(currentState.last_triggered_at);
         const secondsSinceLastNotify = Math.floor((now - lastTriggered) / 1000);
 
         if (secondsSinceLastNotify >= rule.repeat_interval_sec) {
-          await DeviceAlarmState.update({ last_triggered_at: now }, { where: { id: currentState.id } });
+          await DeviceAlarmState.update(
+            { last_triggered_at: now }, 
+            { where: { id: currentState.id } }
+          );
+
           if (rule.notify_email && rule.email_recipients?.length > 0) {
-            sendAlarmEmail(rule.email_recipients, `[REMINDER] ${rule.name}`, `Value: ${currentValue}`);
+            sendAlarmEmail(
+              rule.email_recipients, 
+              `[REMINDER] ${rule.name}`, 
+              `The condition is still met. Current value: ${currentValue}`
+            );
           }
         }
       }
     }
 
-    // --- กรณีที่ 2: กลับมาปกติ (Recover) ---
+    // --- กรณีที่ 2: ค่ากลับมาเป็นปกติ (RECOVER) ---
     else if (!isTriggered && currentState && currentState.is_active) {
       await sequelize.transaction(async (t) => {
+        // 1. ปิดสถานะ Active ในตาราง State
         await DeviceAlarmState.update({
           is_active: false,
           last_value: currentValue
-          // สำคัญ: ห้ามล้าง last_triggered_at ทิ้ง เพื่อเอาไว้เช็คระยะห่าง 15 นาทีในรอบหน้า
-        }, { where: { id: currentState.id }, transaction: t });
+        }, { 
+          where: { id: currentState.id }, 
+          transaction: t 
+        });
 
+        // 2. บันทึกประวัติการคืนค่าลงตาราง Event
+        // เพิ่ม address_id ให้สอดคล้องกับ Model ใหม่
         await DeviceAlarmEvent.create({
-          device_id: device.id, alarm_rule_id: rule.id,
-          event_type: 'RECOVER', value: currentValue
+          device_id: deviceId, 
+          address_id: addressId,
+          alarm_rule_id: rule.id,
+          event_type: 'RECOVER', 
+          value: currentValue
         }, { transaction: t });
       });
-      console.log(`[ALARM RECOVERED] ${device.name}: ${rule.name}`);
+      
+      console.log(`[RECOVERED] Rule: ${rule.name} (Address: ${addressId})`);
     }
   }
 }

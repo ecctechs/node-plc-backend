@@ -55,3 +55,35 @@ exports.getDeviceStatus = async (req, res) => {
     res.status(500).json({ message: 'Cannot load device status' });
   }
 };
+
+exports.getAllAddresses = async (req, res, next) => {
+  try {
+    const addresses = await service.getAllAddresses();
+    res.json(addresses);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getLogsByAddressAndDate = async (req, res) => {
+  try {
+    const { address_id, start, end } = req.query;
+
+    if (!address_id || !start || !end) {
+      return res.status(400).json({
+        message: 'address_id, start, end are required'
+      });
+    }
+
+    const logs = await service.getLogsByAddressAndDate({
+      address_id,
+      start,
+      end
+    });
+
+    res.json(logs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

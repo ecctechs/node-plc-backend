@@ -5,6 +5,13 @@ const chartController = require('../controllers/deviceChart.controller');
 const connectionChartController =
   require('../controllers/deviceConnectionChart.controller');
 
+
+router.get('/addresses', controller.getAllAddresses); // h
+router.get('/chart', controller.getLogsByAddressAndDate);
+
+
+
+
 router.get(
   '/:id/chart/connection',
   connectionChartController.getConnectionChart

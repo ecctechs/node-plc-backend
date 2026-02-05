@@ -1,4 +1,4 @@
-const plcService = require('../src/services/plc.service');
+const plcService = require('../poll');
 
 exports.read = async (req, res) => {
   try {
@@ -10,7 +10,8 @@ exports.read = async (req, res) => {
       });
     }
 
-    const value = await plcService.readAddress(address);
+    // const value = await plcService.readAddress(address);
+    const value = await plcService.readSingleAddress(address);
 
     res.json({ value });
   } catch (err) {
