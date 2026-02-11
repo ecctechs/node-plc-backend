@@ -16,6 +16,7 @@ app.use('/api', require('../routes/deviceAlarm.route'));
 app.use('/api/plc', plcRoute);
 app.use('/api', numberConfigRoute);
 app.use('/api', numberLevelRoute);
+app.use('/api/dashboard', require('../routes/dashboard.routes'));
 
     
 

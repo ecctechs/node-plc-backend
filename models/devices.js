@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'connectionLogs',
       foreignKey: 'device_id'
     });
+    
   };
 
   return Device;
