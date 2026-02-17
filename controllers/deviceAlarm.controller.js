@@ -91,13 +91,15 @@ exports.getHistoryAll = async (req, res) => {
   try {
     const { start, end } = req.query;
     const events = await service.getAllHistory(start, end);
+    console.log('Fetched events:', events); // ✅ เพิ่ม log เพื่อตรวจสอบข้อมูลที่ดึงมาได้
     const formatEvent = (events) => events.map(e => ({
       id: e.id,
       value: e.value,
       event_type: e.event_type,
       created_at: e.created_at,
       rule: e.rule,    // ✅ เปลี่ยนจาก e.Rule เป็น e.rule
-      device: e.device // ⚠️ ถ้าแก้ Device เป็นตัวเล็ก ก็ต้องแก้ตรงนี้เป็น e.device
+      device: e.device, // ⚠️ ถ้าแก้ Device เป็นตัวเล็ก ก็ต้องแก้ตรงนี้เป็น e.device
+      address_id: e.address_id 
     }));
     res.json(formatEvent(events));
   } catch (error) {
