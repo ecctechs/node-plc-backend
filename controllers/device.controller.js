@@ -87,3 +87,28 @@ exports.getLogsByAddressAndDate = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+exports.getChartByAlarm = async (req, res) => {
+  try {
+    const { address_id, alarm_time, expand } = req.query;
+
+    if (!address_id || !alarm_time) {
+      return res.status(400).json({
+        message: 'address_id และ alarm_time จำเป็นต้องส่งมา'
+      });
+    }
+
+    const data = await service.getChartByAlarm(
+      address_id,
+      alarm_time,
+      expand
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: 'Internal server error'
+    });
+  }
+};

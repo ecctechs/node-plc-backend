@@ -5,11 +5,9 @@ const chartController = require('../controllers/deviceChart.controller');
 const connectionChartController =
   require('../controllers/deviceConnectionChart.controller');
 
-
-router.get('/addresses', controller.getAllAddresses); // h
+router.get('/addresses', controller.getAllAddresses); 
 router.get('/chart', controller.getLogsByAddressAndDate);
-
-
+router.get('/chart-by-alarm', controller.getChartByAlarm);
 
 
 router.get(
