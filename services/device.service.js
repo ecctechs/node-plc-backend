@@ -108,3 +108,75 @@ exports.getAllAddresses = async () => {
 exports.getLogsByAddressAndDate = async (params) => {
   return await repo.findByAddressAndDate(params);
 };
+
+const { DeviceAddress, DeviceLog } = require('../models');
+const { Op } = require('sequelize');
+
+exports.getChartByAlarm = async (address_id, alarm_time, expand) => {
+
+  const device = await DeviceAddress.findByPk(address_id);
+  if (!device) throw new Error('Device not found');
+
+  const refreshRateMs = device.refresh_rate_ms || 1000;
+  const expandSeconds = parseInt(expand) || 20;
+
+  // ⭐ ทำให้ alarmTime ชัดเจนระดับวินาที
+  const alarmTime = new Date(alarm_time);
+  alarmTime.setMilliseconds(0);
+
+  const startTime = new Date(alarmTime.getTime() - expandSeconds * 1000);
+  const endTime   = new Date(alarmTime.getTime() + expandSeconds * 1000);
+
+  // ⭐ ดึง log ทั้งช่วง
+  const logsRaw = await DeviceLog.findAll({
+    where: {
+      address_id,
+      created_at: {
+        [Op.between]: [startTime, endTime]
+      }
+    },
+    order: [['created_at', 'ASC']]
+  });
+
+  // ⭐ บังคับให้ created_at เป็น Date object 100%
+  const logs = logsRaw.map(l => ({
+    value: l.value,
+    status: l.status,
+    created_at: new Date(l.created_at)
+  }));
+
+  const result = [];
+  let logIndex = 0;
+
+  // ⭐ loop สร้างจุดข้อมูล
+  for (
+    let time = startTime.getTime();
+    time <= endTime.getTime();
+    time += refreshRateMs
+  ) {
+    const windowStart = new Date(time);
+    const windowEnd = new Date(time + refreshRateMs);
+
+    // ตรวจสอบว่าเวลาใน Loop นี้ตรงกับ Alarm Time หรือไม่
+    const isAlarmPoint = windowStart.getTime() === alarmTime.getTime();
+
+    let log = null;
+    if (logIndex < logs.length) {
+      const logTime = logs[logIndex].created_at;
+
+      if (logTime >= windowStart && logTime < windowEnd) {
+        log = logs[logIndex];
+        logIndex++;
+      }
+    }
+
+    result.push({
+      value: log ? log.value : null,
+      status: log ? log.status : null,
+      created_at: windowStart,
+      is_alarm: isAlarmPoint // เพิ่ม field นี้เพื่อบอกว่าเป็นจุดที่เกิด alarm
+    });
+  }
+
+  return result;
+};
