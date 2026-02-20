@@ -1,5 +1,11 @@
 const service = require('../services/device.service');
 
+/* ===========================================
+   DEVICE APIs
+   Source: src/views/AddDashboardCardModal.vue, src/components/setting/DeviceForm.vue
+   =========================================== */
+
+// GET /api/devices - List all devices with addresses
 exports.getDevices = async (req, res) => {
   try {
     const data = await service.list();
@@ -9,16 +15,7 @@ exports.getDevices = async (req, res) => {
   }
 };
 
-exports.getDeviceById = async (req, res) => {
-  try {
-    const data = await service.getById(req.params.id);
-    if (!data) return res.status(404).json({ message: 'Not found' });
-    res.json(data);
-  } catch (e) {
-    res.status(500).json({ message: e.message });
-  }
-};
-
+// POST /api/devices - Create new device with addresses
 exports.createDevice = async (req, res) => {
   try {
     const data = await service.create(req.body);
@@ -28,43 +25,12 @@ exports.createDevice = async (req, res) => {
   }
 };
 
-exports.updateDevice = async (req, res) => {
-  try {
-    const data = await service.update(req.params.id, req.body);
-    res.json(data);
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
+/* ===========================================
+   CHART APIs
+   Source: src/components/chart/NumberChart.vue, NumberGaugeChart.vue, OnOffChart.vue, LevelChart.vue
+   =========================================== */
 
-exports.deleteDevice = async (req, res) => {
-  try {
-    await service.remove(req.params.id);
-    res.json({ success: true });
-  } catch (e) {
-    res.status(400).json({ message: e.message });
-  }
-};
-
-exports.getDeviceStatus = async (req, res) => {
-  try {
-    const data = await service.getStatusList();
-    res.json(data);
-  } catch (err) {
-    console.error('GET STATUS ERROR:', err.message);
-    res.status(500).json({ message: 'Cannot load device status' });
-  }
-};
-
-exports.getAllAddresses = async (req, res, next) => {
-  try {
-    const addresses = await service.getAllAddresses();
-    res.json(addresses);
-  } catch (err) {
-    next(err);
-  }
-};
-
+// GET /api/devices/chart?address_id={id}&start={}&end={} - Time-series chart data
 exports.getLogsByAddressAndDate = async (req, res) => {
   try {
     const { address_id, start, end } = req.query;
@@ -88,6 +54,7 @@ exports.getLogsByAddressAndDate = async (req, res) => {
   }
 };
 
+// GET /api/devices/chart-by-alarm?address_id={id}&alarm_time={}&expand={} - Chart data by alarm time
 exports.getChartByAlarm = async (req, res) => {
   try {
     const { address_id, alarm_time, expand } = req.query;

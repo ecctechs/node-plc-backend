@@ -2,25 +2,12 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/deviceNumberConfig.controller');
 
-// ⭐ เปลี่ยนจาก /devices/:deviceId เป็น /addresses/:addressId
-router.get(
-  '/addresses/:addressId/number-config',
-  controller.get
-);
+/* ===========================================
+   NUMBER CONFIG APIs
+   Source: src/components/setting/DeviceForm.vue
+   =========================================== */
 
-router.post(
-  '/addresses/:addressId/number-config',
-  controller.create
-);
-
-router.put(
-  '/addresses/:addressId/number-config',
-  controller.update
-);
-
-router.delete(
-  '/addresses/:addressId/number-config',
-  controller.remove
-);
+// POST /api/addresses/:addressId/number-config - Save numeric display config
+router.post('/addresses/:addressId/number-config', controller.create);
 
 module.exports = router;

@@ -2,24 +2,12 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/deviceLevelConfig.controller');
 
-router.get(
-  '/addresses/:addressId/levels', 
-  controller.listByAddress  
-);
+/* ===========================================
+   LEVEL CONFIG APIs
+   Source: src/components/setting/DeviceForm.vue
+   =========================================== */
 
-router.post(
-  '/addresses/:addressId/levels', 
-  controller.syncLevels     
-);
-
-router.put(
-  '/levels/:id', 
-  controller.update         
-);
-
-router.delete(
-  '/levels/:id', 
-  controller.remove         
-);
+// POST /api/addresses/:addressId/levels - Save level ranges
+router.post('/addresses/:addressId/levels', controller.syncLevels);
 
 module.exports = router;
