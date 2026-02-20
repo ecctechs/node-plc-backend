@@ -2,7 +2,18 @@ const repo = require('../repositories/device.repo');
 const { reloadPolling } = require('../poll');
 
 
-exports.list = async () => repo.findAll();
+exports.list = async () => {
+  const devices = await repo.findAll();
+  return devices.map(device => ({
+    id: device.id,
+    name: device.name,
+    addresses: device.addresses.map(addr => ({
+      id: addr.id,
+      label: addr.label,
+      plc_address: addr.plc_address
+    }))
+  }));
+};
 
 exports.getById = async (id) => repo.findById(id);
 

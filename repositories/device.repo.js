@@ -1,4 +1,4 @@
-const { Device, sequelize, DeviceAddress, DeviceNumberConfig, DeviceLevelConfig , DeviceAlarmRule , DeviceLog} = require('../models');
+const { Device, sequelize, DeviceAddress, DeviceNumberConfig, DeviceLevelConfig, DeviceAlarmRule, DeviceLog} = require('../models');
 const { QueryTypes, Op } = require('sequelize');
 
 exports.findAll = async () => Device.findAll({
@@ -6,20 +6,7 @@ exports.findAll = async () => Device.findAll({
     {
       model: DeviceAddress,
       as: 'addresses',
-      include: [
-        {
-          model: DeviceNumberConfig,
-          as: 'numberConfig'
-        },
-        {
-          model: DeviceLevelConfig,
-          as: 'levels'
-        },
-        {
-          model: DeviceAlarmRule,
-          as: 'alarms'
-        }
-      ]
+      attributes: ['id', 'label', 'plc_address']
     }
   ],
   order: [
