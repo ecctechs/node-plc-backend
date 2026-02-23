@@ -2,7 +2,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = require('./app');
 
-const { startPollWorker } = require('../poll');
+const { startPollWorker } = require('../plcPoller');
 
 const PORT = process.env.PORT || 3001;
 

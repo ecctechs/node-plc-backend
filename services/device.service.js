@@ -1,7 +1,38 @@
 const repo = require('../repositories/device.repo');
-const { reloadPolling } = require('../poll');
+const { reloadPolling } = require('../plcPoller');
 const { DeviceAddress, DeviceLog } = require('../models');
 const { Op } = require('sequelize');
+const repoLevel = require('../repositories/deviceLevelConfig.repo');
+
+// Map a raw value to a level config entry
+function mapValueToLevel(value, levels) {
+  for (const level of levels) {
+    if (level.mode === 'exact') {
+      const exacts = (level.exact_values || []).map(Number);
+      if (exacts.includes(Number(value))) return level;
+    }
+
+    if (level.mode === 'criteria') {
+      const min = level.min_value;
+      const max = level.max_value;
+
+      switch (level.condition_type) {
+        case 'MT':  if (min !== null && value > min) return level; break;
+        case 'MTE': if (min !== null && value >= min) return level; break;
+        case 'LT':  if (min !== null && value < min) return level; break;
+        case 'LTE': if (min !== null && value <= min) return level; break;
+        case 'BTW':
+          if (
+            min !== null && max !== null &&
+            (level.include_min ? value >= min : value > min) &&
+            (level.include_max ? value <= max : value < max)
+          ) return level;
+          break;
+      }
+    }
+  }
+  return null;
+}
 
 // List all devices with addresses
 exports.list = async () => {
@@ -35,7 +66,41 @@ exports.create = async (payload) => {
 
 // Get logs by address and date range
 exports.getLogsByAddressAndDate = async (params) => {
-  return await repo.findByAddressAndDate(params);
+  const { address_id, start, end } = params;
+  
+  // Get the device address to check data_type
+  const deviceAddress = await DeviceAddress.findByPk(address_id);
+  if (!deviceAddress) {
+    throw new Error('Device address not found');
+  }
+  
+  const logs = await repo.findByAddressAndDate(params);
+  
+  // If data_type is 'level', map values to level indices
+  if (deviceAddress.data_type === 'level') {
+    const levels = await repoLevel.findByAddressId(address_id);
+    
+    const series = logs.map(log => {
+      const level = mapValueToLevel(log.value, levels);
+      return {
+        x: log.created_at,
+        y: level ? level.level_index : null,
+        label: level ? level.label : 'UNKNOWN',
+        value: log.value,
+        status: log.status
+      };
+    });
+    
+    return {
+      address_id,
+      data_type: 'level',
+      levels: levels.map(l => ({ level_index: l.level_index, label: l.label })),
+      series
+    };
+  }
+  
+  // Return raw data for other types (numbers, onoff)
+  return logs;
 };
 
 // Get chart data centered around an alarm time

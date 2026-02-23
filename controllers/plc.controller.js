@@ -1,4 +1,4 @@
-const plcService = require('../poll');
+const plcService = require('../plcPoller');
 
 // GET /api/plc/read?address
 exports.read = async (req, res) => {
