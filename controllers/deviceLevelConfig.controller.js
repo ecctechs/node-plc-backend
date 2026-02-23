@@ -1,11 +1,6 @@
 const service = require('../services/deviceLevelConfig.service');
 
-/* ===========================================
-   LEVEL CONFIG APIs
-   Source: src/components/setting/DeviceForm.vue
-   =========================================== */
-
-// POST /api/addresses/:addressId/levels - Save level ranges
+// POST /api/addresses/:addressId/levels
 exports.syncLevels = async (req, res) => {
   try {
     const data = await service.syncLevels(req.params.addressId, req.body);

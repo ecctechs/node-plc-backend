@@ -5,7 +5,6 @@ exports.get = async () => {
 };
 
 exports.update = async (payload) => {
-  // ตัวอย่าง validation ง่าย ๆ
   if (payload.end_time <= payload.start_time) {
     throw new Error('end_time must be greater than start_time');
   }

@@ -4,7 +4,6 @@ const Modbus = require('jsmodbus');
 const { DeviceAddress, DeviceLog, Device } = require('./models');
 const { processAlarms } = require('./src/services/alarm.service');
 
-// ✅ 1. ย้ายตัวแปรที่ต้องใช้ร่วมกันมาไว้ข้างนอก (Global/Module Scope)
 let isPlcConnected = false;
 let pollingIntervals = [];
 let socket = null;
@@ -16,7 +15,7 @@ const PLC_HOST = '192.168.3.250';
 const PLC_PORT = 502;
 const BULK_INSERT_INTERVAL = 2000;
 
-// ฟังก์ชันช่วย Parse Address (ย้ายมาข้างนอกเพื่อความเป็นระเบียบ)
+// Parse PLC address string to modbus address and bit flag
 const parsePlcAddress = (addr) => {
     const numericPart = parseInt(addr.replace(/\D/g, ''));
     const prefix = addr.toUpperCase().replace(/[0-9]/g, '');
@@ -33,12 +32,11 @@ const parsePlcAddress = (addr) => {
     return { address, isBit };
 };
 
-// ✅ 2. ย้าย startDynamicPolling มาข้างนอก เพื่อให้ reloadPolling เรียกใช้ได้
+// Start polling all addresses grouped by refresh rate
 async function startDynamicPolling() {
-    // เคลียร์ Interval เก่า
     pollingIntervals.forEach(clearInterval);
     pollingIntervals = [];
-    console.log("🧹 System: Old intervals cleared.");
+    console.log('System: Old intervals cleared.');
 
     try {
         const addresses = await DeviceAddress.findAll({
@@ -88,7 +86,7 @@ async function startDynamicPolling() {
                     results.forEach(r => roundResults[r.plcAddr] = r.val);
                 } catch (err) {
                     isPlcConnected = false;
-                    console.error("🔌 Polling Error:", err.message);
+                    console.error('Polling Error:', err.message);
                     return;
                 }
 
@@ -107,47 +105,41 @@ async function startDynamicPolling() {
             }, interval);
 
             pollingIntervals.push(timer);
-            console.log(`🚀 Polling ${interval}ms (${groupItems.length})`);
+            console.log(`Polling ${interval}ms (${groupItems.length} addresses)`);
         });
     } catch (err) {
-        console.error("❌ System Error:", err.message);
+        console.error('System Error:', err.message);
     }
 }
 
-// ✅ 3. ฟังก์ชัน reloadPolling ตอนนี้จะทำงานได้แล้วเพราะเห็นตัวแปรข้างบน
+// Reload polling after device config changes
 async function reloadPolling() {
-    console.log("🔄 System: Reloading configuration...");
+    console.log('System: Reloading configuration...');
     if (isPlcConnected) {
         await startDynamicPolling();
     } else {
         pollingIntervals.forEach(clearInterval);
         pollingIntervals = [];
-        console.log("⚠️ System: Intervals cleared, waiting for PLC to reconnect.");
+        console.log('System: Intervals cleared, waiting for PLC reconnect.');
     }
 }
 
+// Read a single PLC address on demand
 async function readSingleAddress(plcAddr) {
-    // 1. ตรวจสอบการเชื่อมต่อ
-    if (!isPlcConnected || !client) {
-        throw new Error('PLC not connected');
-    }
+    if (!isPlcConnected || !client) throw new Error('PLC not connected');
 
-    // 2. แปลง Address
     const { address, isBit } = parsePlcAddress(plcAddr);
 
     try {
-        let resp;
         if (isBit) {
-            // อ่าน Coils (M, X, Y, SM)
-            resp = await client.readCoils(address, 1);
+            const resp = await client.readCoils(address, 1);
             return resp.response._body.values[0] ? 1 : 0;
         } else {
-            // อ่าน Holding Register (D)
-            resp = await client.readHoldingRegisters(address, 1);
+            const resp = await client.readHoldingRegisters(address, 1);
             return resp.response._body.values[0];
         }
     } catch (err) {
-        console.error(`❌ Single Read Error [${plcAddr}]:`, err.message);
+        console.error(`Single Read Error [${plcAddr}]:`, err.message);
         throw err;
     }
 }
@@ -156,7 +148,7 @@ function startPollWorker() {
     socket = new net.Socket();
     client = new Modbus.client.TCP(socket, 0);
 
-    // --- Bulk Insert (คงไว้ข้างในได้) ---
+    // Bulk insert to DB every BULK_INSERT_INTERVAL ms
     setInterval(async () => {
         if (!dataBuffer.length) return;
         const batch = [...dataBuffer];
@@ -173,42 +165,38 @@ function startPollWorker() {
                     )
                 )
             );
-            console.log(`📦 DB Write: ${batch.length}`);
+            console.log(`DB Write: ${batch.length} records`);
         } catch (err) {
-            console.error("❌ DB Error:", err.message);
+            console.error('DB Error:', err.message);
         }
     }, BULK_INSERT_INTERVAL);
 
     const connectPLC = () => {
-        console.log("🔗 Connecting to PLC", PLC_HOST);
+        console.log('Connecting to PLC', PLC_HOST);
         socket.connect({ host: PLC_HOST, port: PLC_PORT });
     };
 
     socket.on('connect', () => {
         isPlcConnected = true;
-        console.log("✅ PLC Online");
+        console.log('PLC Online');
         startDynamicPolling();
     });
 
     socket.on('error', (err) => {
         isPlcConnected = false;
-        console.error("🔌 Socket Error:", err.message);
+        console.error('Socket Error:', err.message);
     });
 
     socket.on('close', () => {
         isPlcConnected = false;
-        console.log("🔌 PLC Offline, reconnect in 5s");
+        console.log('PLC Offline, reconnect in 5s');
         setTimeout(connectPLC, 5000);
     });
 
     connectPLC();
 }
 
-module.exports = {
-    startPollWorker,
-    reloadPolling,
-    readSingleAddress
-};
+module.exports = { startPollWorker, reloadPolling, readSingleAddress };
 
 if (require.main === module) {
     startPollWorker();

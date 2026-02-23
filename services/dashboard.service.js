@@ -7,7 +7,6 @@ exports.getCards = async () => {
     const addr = card.address;
 
     return {
-      // 🔥 DashboardCard fields
       card_id: card.id,
       position: card.position,
       is_active: card.is_active,
@@ -51,9 +50,7 @@ exports.createCard = async (userId, payload) => {
   }
 
   const exists = await dashboardRepo.findByUserAndAddress(userId, address_id);
-  if (exists) {
-    throw { status: 409, message: 'Card already exists' };
-  }
+  if (exists) throw { status: 409, message: 'Card already exists' };
 
   const nextPos = await dashboardRepo.getNextPosition(userId);
 
@@ -69,18 +66,10 @@ exports.createCard = async (userId, payload) => {
 exports.deleteCard = async (cardId, userId) => {
   const card = await dashboardRepo.findById(cardId);
 
-  if (!card) {
-    throw new Error('Dashboard card not found');
-  }
+  if (!card) throw new Error('Dashboard card not found');
 
-  // 🔒 กันลบข้าม user
-  if (card.user_id !== userId) {
-    throw new Error('Permission denied');
-  }
+  // Prevent cross-user deletion
+  if (card.user_id !== userId) throw new Error('Permission denied');
 
-  // ✅ soft delete (แนะนำ)
   await dashboardRepo.softDelete(cardId);
-
-  // ❌ หรือ hard delete (ถ้าต้องการ)
-  // await dashboardRepo.hardDelete(cardId);
 };

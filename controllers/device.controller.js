@@ -1,11 +1,6 @@
 const service = require('../services/device.service');
 
-/* ===========================================
-   DEVICE APIs
-   Source: src/views/AddDashboardCardModal.vue, src/components/setting/DeviceForm.vue
-   =========================================== */
-
-// GET /api/devices - List all devices with addresses
+// GET /api/devices
 exports.getDevices = async (req, res) => {
   try {
     const data = await service.list();
@@ -15,7 +10,7 @@ exports.getDevices = async (req, res) => {
   }
 };
 
-// POST /api/devices - Create new device with addresses
+// POST /api/devices
 exports.createDevice = async (req, res) => {
   try {
     const data = await service.create(req.body);
@@ -25,28 +20,16 @@ exports.createDevice = async (req, res) => {
   }
 };
 
-/* ===========================================
-   CHART APIs
-   Source: src/components/chart/NumberChart.vue, NumberGaugeChart.vue, OnOffChart.vue, LevelChart.vue
-   =========================================== */
-
-// GET /api/devices/chart?address_id={id}&start={}&end={} - Time-series chart data
+// GET /api/devices/chart?address_id&start&end
 exports.getLogsByAddressAndDate = async (req, res) => {
   try {
     const { address_id, start, end } = req.query;
 
     if (!address_id || !start || !end) {
-      return res.status(400).json({
-        message: 'address_id, start, end are required'
-      });
+      return res.status(400).json({ message: 'address_id, start, end are required' });
     }
 
-    const logs = await service.getLogsByAddressAndDate({
-      address_id,
-      start,
-      end
-    });
-
+    const logs = await service.getLogsByAddressAndDate({ address_id, start, end });
     res.json(logs);
   } catch (err) {
     console.error(err);
@@ -54,28 +37,19 @@ exports.getLogsByAddressAndDate = async (req, res) => {
   }
 };
 
-// GET /api/devices/chart-by-alarm?address_id={id}&alarm_time={}&expand={} - Chart data by alarm time
+// GET /api/devices/chart-by-alarm?address_id&alarm_time&expand
 exports.getChartByAlarm = async (req, res) => {
   try {
     const { address_id, alarm_time, expand } = req.query;
 
     if (!address_id || !alarm_time) {
-      return res.status(400).json({
-        message: 'address_id และ alarm_time จำเป็นต้องส่งมา'
-      });
+      return res.status(400).json({ message: 'address_id and alarm_time are required' });
     }
 
-    const data = await service.getChartByAlarm(
-      address_id,
-      alarm_time,
-      expand
-    );
-
+    const data = await service.getChartByAlarm(address_id, alarm_time, expand);
     res.json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      message: 'Internal server error'
-    });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };

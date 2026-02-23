@@ -3,12 +3,7 @@ const { reloadPolling } = require('../poll');
 const { DeviceAddress, DeviceLog } = require('../models');
 const { Op } = require('sequelize');
 
-/* ===========================================
-   DEVICE APIs
-   Source: src/views/AddDashboardCardModal.vue, src/components/setting/DeviceForm.vue
-   =========================================== */
-
-// GET /api/devices - List all devices with addresses
+// List all devices with addresses
 exports.list = async () => {
   const devices = await repo.findAll();
   return devices.map(device => ({
@@ -22,41 +17,28 @@ exports.list = async () => {
   }));
 };
 
-// POST /api/devices - Create new device with addresses
+// Create device with addresses
 exports.create = async (payload) => {
   const { name, device_type, refresh_rate_ms, addresses } = payload;
-  
+
   if (!name || !device_type || !addresses || !addresses.length) {
     throw new Error('Name, device_type, and at least one address are required');
   }
 
   const exists = await repo.findByName(name);
-  if (exists) {
-    throw new Error(`Device name "${name}" already exists`);
-  }
+  if (exists) throw new Error(`Device name "${name}" already exists`);
 
-  const device = await repo.create({
-    name,
-    device_type,
-    refresh_rate_ms,
-    addresses 
-  });
-
+  const device = await repo.create({ name, device_type, refresh_rate_ms, addresses });
   await reloadPolling();
   return device;
 };
 
-/* ===========================================
-   CHART APIs
-   Source: src/components/chart/NumberChart.vue, NumberGaugeChart.vue, OnOffChart.vue, LevelChart.vue
-   =========================================== */
-
-// GET /api/devices/chart?address_id={id}&start={}&end={} - Time-series chart data
+// Get logs by address and date range
 exports.getLogsByAddressAndDate = async (params) => {
   return await repo.findByAddressAndDate(params);
 };
 
-// GET /api/devices/chart-by-alarm?address_id={id}&alarm_time={}&expand={} - Chart data by alarm time
+// Get chart data centered around an alarm time
 exports.getChartByAlarm = async (address_id, alarm_time, expand) => {
   const device = await DeviceAddress.findByPk(address_id);
   if (!device) throw new Error('Device not found');
@@ -73,9 +55,7 @@ exports.getChartByAlarm = async (address_id, alarm_time, expand) => {
   const logsRaw = await DeviceLog.findAll({
     where: {
       address_id,
-      created_at: {
-        [Op.between]: [startTime, endTime]
-      }
+      created_at: { [Op.between]: [startTime, endTime] }
     },
     order: [['created_at', 'ASC']]
   });
@@ -89,20 +69,14 @@ exports.getChartByAlarm = async (address_id, alarm_time, expand) => {
   const result = [];
   let logIndex = 0;
 
-  for (
-    let time = startTime.getTime();
-    time <= endTime.getTime();
-    time += refreshRateMs
-  ) {
+  for (let time = startTime.getTime(); time <= endTime.getTime(); time += refreshRateMs) {
     const windowStart = new Date(time);
     const windowEnd = new Date(time + refreshRateMs);
-
     const isAlarmPoint = windowStart.getTime() === alarmTime.getTime();
 
     let log = null;
     if (logIndex < logs.length) {
       const logTime = logs[logIndex].created_at;
-
       if (logTime >= windowStart && logTime < windowEnd) {
         log = logs[logIndex];
         logIndex++;

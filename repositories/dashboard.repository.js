@@ -15,23 +15,10 @@ exports.findAll = async () => {
         model: DeviceAddress,
         as: 'address',
         include: [
-          {
-            model: Device,
-            as: 'device',
-            attributes: ['id', 'name', 'device_type']
-          },
-          {
-            model: DeviceNumberConfig,
-            as: 'numberConfig'
-          },
-          {
-            model: DeviceLevelConfig,
-            as: 'levels'
-          },
-          {
-            model: DeviceAlarmRule,
-            as: 'alarms'
-          }
+          { model: Device, as: 'device', attributes: ['id', 'name', 'device_type'] },
+          { model: DeviceNumberConfig, as: 'numberConfig' },
+          { model: DeviceLevelConfig, as: 'levels' },
+          { model: DeviceAlarmRule, as: 'alarms' }
         ]
       }
     ],
@@ -39,39 +26,21 @@ exports.findAll = async () => {
   });
 };
 
-
 exports.findByUserAndAddress = (userId, addressId) => {
-  return DashboardCard.findOne({
-    where: { user_id: userId, address_id: addressId }
-  });
+  return DashboardCard.findOne({ where: { user_id: userId, address_id: addressId } });
 };
 
 exports.getNextPosition = async (userId) => {
-  const max = await DashboardCard.max('position', {
-    where: { user_id: userId }
-  });
+  const max = await DashboardCard.max('position', { where: { user_id: userId } });
   return (max ?? 0) + 1;
 };
 
-exports.create = (data) => {
-  return DashboardCard.create(data);
-};
+exports.create = (data) => DashboardCard.create(data);
 
-exports.findById = (id) => {
-  return DashboardCard.findByPk(id);
-};
+exports.findById = (id) => DashboardCard.findByPk(id);
 
-// ⭐ Soft delete
-exports.softDelete = (id) => {
-  return DashboardCard.update(
-    { is_active: false },
-    { where: { id } }
-  );
-};
+// Soft delete (set is_active = false)
+exports.softDelete = (id) => DashboardCard.update({ is_active: false }, { where: { id } });
 
-// ❌ Hard delete
-exports.hardDelete = (id) => {
-  return DashboardCard.destroy({
-    where: { id }
-  });
-};
+// Hard delete
+exports.hardDelete = (id) => DashboardCard.destroy({ where: { id } });

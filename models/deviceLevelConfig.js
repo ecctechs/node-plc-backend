@@ -7,14 +7,8 @@ module.exports = (sequelize, DataTypes) => {
     condition_type: { type: DataTypes.TEXT, allowNull: false }, // LTE, GTE, BTW
     min_value: { type: DataTypes.FLOAT, allowNull: true },
     max_value: { type: DataTypes.FLOAT, allowNull: true },
-    // ⭐ ฟิลด์เพิ่มเติมจาก Payload เดิม
-    mode: { type: DataTypes.TEXT, defaultValue: 'range' }, // range, exact
-    exact_values: {
-      // สำหรับ PostgreSQL ต้องใช้ DataTypes.ARRAY
-      type: DataTypes.ARRAY(DataTypes.INTEGER), 
-      allowNull: true,
-      defaultValue: []
-    },
+    mode: { type: DataTypes.TEXT, defaultValue: 'range' }, // range | exact
+    exact_values: { type: DataTypes.ARRAY(DataTypes.INTEGER), allowNull: true, defaultValue: [] },
     include_min: { type: DataTypes.BOOLEAN, defaultValue: true },
     include_max: { type: DataTypes.BOOLEAN, defaultValue: true },
   }, {

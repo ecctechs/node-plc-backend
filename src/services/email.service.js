@@ -1,38 +1,30 @@
 'use strict';
 const nodemailer = require('nodemailer');
 
-// สร้าง transporter โดยใช้ค่าจาก config/env
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'mail.eccsolutions.co.th',
   port: process.env.EMAIL_PORT || 587,
-  secure: false, // ใช้ false สำหรับ port 587 (STARTTLS)
+  secure: false, // port 587 uses STARTTLS
   auth: {
     user: process.env.EMAIL_USER || 'techs@eccsolutions.co.th',
     pass: process.env.EMAIL_PASS || 'T4ch@ECC!solutions',
   },
-  tls: {
-    rejectUnauthorized: false // ช่วยแก้ปัญหาใบรับรอง SSL ในบางเคส
-  }
+  tls: { rejectUnauthorized: false }
 });
 
-/**
- * ฟังก์ชันสำหรับส่งอีเมล
- */
+// Send alarm email to recipients
 async function sendAlarmEmail(recipients, subject, htmlContent) {
   try {
-    // ตรวจสอบว่ามีผู้รับไหม
     if (!recipients || (Array.isArray(recipients) && recipients.length === 0)) {
       console.error('[EMAIL ERROR] No recipients specified');
       return false;
     }
 
     const info = await transporter.sendMail({
-      // แก้ไขเครื่องหมายคำพูดให้ถูกต้อง
-      from: '"PLC Alarm System" <techs@eccsolutions.co.th>', 
-      // แปลง Array เป็น String (comma separated) ถ้าจำเป็น
-      to: Array.isArray(recipients) ? recipients.join(', ') : recipients, 
-      subject: subject,
-      html: htmlContent, // ใช้ตัวแปรที่รับมาจาก Parameters
+      from: '"PLC Alarm System" <techs@eccsolutions.co.th>',
+      to: Array.isArray(recipients) ? recipients.join(', ') : recipients,
+      subject,
+      html: htmlContent,
     });
 
     console.log('[EMAIL SENT] Message ID: %s', info.messageId);

@@ -1,12 +1,7 @@
 const repo = require('../repositories/deviceLog.repo');
 const repo_device = require('../repositories/device.repo');
 
-/* ===========================================
-   CHART APIs
-   Source: src/components/chart/LevelChart.vue
-   =========================================== */
-
-// GET /api/devices/:id/chart/level?start={}&end={} - Level chart data
+// Map a raw value to a level config entry
 function mapValueToLevel(value, levels) {
   for (const level of levels) {
     if (level.mode === 'exact') {
@@ -19,18 +14,10 @@ function mapValueToLevel(value, levels) {
       const max = level.max_value;
 
       switch (level.condition_type) {
-        case 'MT':
-          if (min !== null && value > min) return level;
-          break;
-        case 'MTE':
-          if (min !== null && value >= min) return level;
-          break;
-        case 'LT':
-          if (min !== null && value < min) return level;
-          break;
-        case 'LTE':
-          if (min !== null && value <= min) return level;
-          break;
+        case 'MT':  if (min !== null && value > min) return level; break;
+        case 'MTE': if (min !== null && value >= min) return level; break;
+        case 'LT':  if (min !== null && value < min) return level; break;
+        case 'LTE': if (min !== null && value <= min) return level; break;
         case 'BTW':
           if (
             min !== null && max !== null &&
@@ -51,7 +38,6 @@ exports.getLevelChart = async (address_id, start, end, includeRaw) => {
 
   const series = logs.map(log => {
     const level = mapValueToLevel(log.value, levels);
-
     return {
       x: log.created_at,
       y: level ? level.level_index : null,
@@ -62,11 +48,8 @@ exports.getLevelChart = async (address_id, start, end, includeRaw) => {
   });
 
   return {
-    address_id: address_id,
-    levels: levels.map(l => ({
-      level_index: l.level_index,
-      label: l.label
-    })),
+    address_id,
+    levels: levels.map(l => ({ level_index: l.level_index, label: l.label })),
     series
   };
 };

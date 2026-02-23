@@ -3,12 +3,7 @@
 const repo = require('../repositories/deviceAlarm.repo');
 const addressRepo = require('../repositories/deviceAddress.repo');
 
-/* ===========================================
-   ALARM APIs
-   Source: src/components/setting/DeviceForm.vue, src/views/AlarmHistory.vue
-   =========================================== */
-
-// POST /api/addresses/:addressId/alarms - Create alarms for an address
+// Create alarm rule for an address
 exports.createAlarm = async (addressId, payload) => {
   const address = await addressRepo.findById(addressId);
   if (!address) throw new Error('Address not found');
@@ -24,7 +19,7 @@ exports.createAlarm = async (addressId, payload) => {
   });
 };
 
-// GET /api/events/all?start={}&end={} - Alarm/history listing
+// Get all alarm events in date range
 exports.getAllHistory = async (start, end) => {
   return await repo.findAllEvents(start, end);
 };

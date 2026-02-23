@@ -1,11 +1,6 @@
 const service = require('../services/deviceNumberConfig.service');
 
-/* ===========================================
-   NUMBER CONFIG APIs
-   Source: src/components/setting/DeviceForm.vue
-   =========================================== */
-
-// POST /api/addresses/:addressId/number-config - Save numeric display config
+// POST /api/addresses/:addressId/number-config
 exports.create = async (req, res) => {
   try {
     const data = await service.create(req.params.addressId, req.body);
