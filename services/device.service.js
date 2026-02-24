@@ -131,6 +131,12 @@ exports.getChartByAlarm = async (address_id, alarm_time, expand) => {
     created_at: new Date(l.created_at)
   }));
 
+  // If data_type is 'level', get level configs
+  let levels = null;
+  if (device.data_type === 'level') {
+    levels = await repoLevel.findByAddressId(address_id);
+  }
+
   const result = [];
   let logIndex = 0;
 
@@ -148,12 +154,35 @@ exports.getChartByAlarm = async (address_id, alarm_time, expand) => {
       }
     }
 
-    result.push({
-      value: log ? log.value : null,
-      status: log ? log.status : null,
-      created_at: windowStart,
-      is_alarm: isAlarmPoint
-    });
+    if (device.data_type === 'level' && log) {
+      // Map value to level for level type
+      const level = mapValueToLevel(log.value, levels);
+      result.push({
+        x: windowStart,
+        y: level ? level.level_index : null,
+        label: level ? level.label : 'UNKNOWN',
+        value: log.value,
+        status: log.status,
+        is_alarm: isAlarmPoint
+      });
+    } else {
+      result.push({
+        value: log ? log.value : null,
+        status: log ? log.status : null,
+        created_at: windowStart,
+        is_alarm: isAlarmPoint
+      });
+    }
+  }
+
+  // If level type, return with level info
+  if (device.data_type === 'level') {
+    return {
+      address_id,
+      data_type: 'level',
+      levels: levels.map(l => ({ level_index: l.level_index, label: l.label })),
+      series: result
+    };
   }
 
   return result;
