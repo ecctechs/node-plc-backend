@@ -12,5 +12,6 @@ app.use('/api/plc', require('../routes/plc.route'));
 app.use('/api', require('../routes/deviceNumberConfig.route'));
 app.use('/api', require('../routes/deviceLevelConfig.route'));
 app.use('/api/dashboard', require('../routes/dashboard.routes'));
+app.use('/api/interaction', require('../routes/interactionLayout.route'));
 
 module.exports = app;
