@@ -194,6 +194,48 @@ async function readSingleAddress(plcAddr) {
   }
 }
 
+async function writeModbusValue(plcAddr, value) {
+  const { address, isBit } = parsePlcAddress(plcAddr);
+
+  if (isBit) {
+    const coilValue = value ? true : false;
+    await state.client.writeSingleCoil(address, coilValue);
+    return;
+  }
+
+  await state.client.writeSingleRegister(address, value);
+}
+
+/**
+ * Write a value to a single PLC address
+ * @param {string} plcAddr - PLC address (e.g., 'D100', 'M10', 'SM0', 'Y0', 'X0')
+ * @param {number} value - Value to write
+ * @returns {Promise<boolean>} - Returns true if successful
+ * @throws {Error} - Throws if PLC not connected or write fails
+ * 
+ * @example
+ * // Write to D register
+ * await writeSingleAddress('D100', 123);
+ * 
+ * // Write to M (bit)
+ * await writeSingleAddress('M10', 1);
+ * 
+ * // Write to SM (special memory bit)
+ * await writeSingleAddress('SM0', 0);
+ */
+async function writeSingleAddress(plcAddr, value) {
+  if (!state.isPlcConnected || !state.client) throw new Error('PLC not connected');
+
+  try {
+    await writeModbusValue(plcAddr, value);
+    console.log(`Write [${plcAddr}] = ${value}`);
+    return true;
+  } catch (err) {
+    console.error(`Single Write Error [${plcAddr}]:`, err.message);
+    throw err;
+  }
+}
+
 function startPollWorker() {
   state.socket = new net.Socket();
   state.client = new Modbus.client.TCP(state.socket, MODBUS_UNIT_ID);
@@ -225,7 +267,7 @@ function startPollWorker() {
   connectPLC();
 }
 
-module.exports = { startPollWorker, reloadPolling, readSingleAddress };
+module.exports = { startPollWorker, reloadPolling, readSingleAddress, writeSingleAddress, isPlcConnected: () => state.isPlcConnected };
 
 if (require.main === module) {
   startPollWorker();
