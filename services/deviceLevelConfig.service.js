@@ -31,6 +31,6 @@ function validateLevel(p, isUpdate = false) {
     if (Number(p.min_value) >= Number(p.max_value)) throw new Error('min_value must be less than max_value');
   }
 
-  if (p.condition_type === 'LTE' && p.max_value == null) throw new Error('LTE requires max_value');
+  // if (p.condition_type === 'LTE' && p.max_value == null) throw new Error('LTE requires max_value');
   if (p.condition_type === 'GTE' && p.min_value == null) throw new Error('GTE requires min_value');
 }
