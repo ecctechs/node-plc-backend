@@ -19,14 +19,16 @@ function evaluateCondition(value, rule) {
 }
 
 // Process all alarm rules for a given address and value
-async function processAlarms(addressId, deviceId, currentValue) {
+async function processAlarms(addressId, deviceId, value) {
+  // Value is already processed from plcPoller (applied offset/scale/decimal)
+  // We still fetch address for potential future use, but use value directly
   const rules = await DeviceAlarmRule.findAll({
     where: { address_id: addressId, is_active: true },
     include: [{ model: DeviceAlarmState, as: 'state' }]
   });
 
   for (const rule of rules) {
-    const isTriggered = evaluateCondition(currentValue, rule);
+    const isTriggered = evaluateCondition(value, rule);
     const currentState = rule.state;
     const now = new Date();
 
@@ -42,12 +44,12 @@ async function processAlarms(addressId, deviceId, currentValue) {
         await sequelize.transaction(async (t) => {
           const [state, created] = await DeviceAlarmState.findOrCreate({
             where: { alarm_rule_id: rule.id, address_id: addressId },
-            defaults: { is_active: true, last_triggered_at: now, last_value: currentValue, device_id: deviceId },
+            defaults: { is_active: true, last_triggered_at: now, last_value: value, device_id: deviceId },
             transaction: t
           });
 
           if (!created) {
-            await state.update({ is_active: true, last_value: currentValue, device_id: deviceId }, { transaction: t });
+            await state.update({ is_active: true, last_value: value, device_id: deviceId }, { transaction: t });
           }
 
           // Log event for error/critical severity only
@@ -57,7 +59,7 @@ async function processAlarms(addressId, deviceId, currentValue) {
               address_id: addressId,
               alarm_rule_id: rule.id,
               event_type: 'TRIGGER',
-              value: currentValue
+              value: value
             }, { transaction: t });
           }
 
@@ -71,7 +73,7 @@ async function processAlarms(addressId, deviceId, currentValue) {
               <h3>Alarm Triggered</h3>
               <p><b>Rule:</b> ${rule.name}</p>
               <p><b>Severity:</b> ${rule.severity}</p>
-              <p><b>Value:</b> ${currentValue}</p>
+              <p><b>Value:</b> ${value}</p>
               <p><b>Time:</b> ${now.toLocaleString()}</p>
             `;
             sendAlarmEmail(rule.email_recipients, subject, html);
@@ -88,7 +90,7 @@ async function processAlarms(addressId, deviceId, currentValue) {
             sendAlarmEmail(
               rule.email_recipients,
               `[REMINDER] ${rule.name}`,
-              `The condition is still met. Current value: ${currentValue}`
+              `The condition is still met. Current value: ${value}`
             );
           }
         }
@@ -99,7 +101,7 @@ async function processAlarms(addressId, deviceId, currentValue) {
     else if (!isTriggered && currentState && currentState.is_active) {
       await sequelize.transaction(async (t) => {
         await DeviceAlarmState.update(
-          { is_active: false, last_value: currentValue },
+          { is_active: false, last_value: value },
           { where: { id: currentState.id }, transaction: t }
         );
 
@@ -110,7 +112,7 @@ async function processAlarms(addressId, deviceId, currentValue) {
             address_id: addressId,
             alarm_rule_id: rule.id,
             event_type: 'RECOVER',
-            value: currentValue
+            value: value
           }, { transaction: t });
         }
       });

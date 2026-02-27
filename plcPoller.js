@@ -2,7 +2,7 @@
 
 const net = require('net');
 const Modbus = require('jsmodbus');
-const { DeviceAddress, DeviceLog, Device } = require('./models');
+const { DeviceAddress, DeviceNumberConfig, DeviceLog, Device } = require('./models');
 const { processAlarms } = require('./src/services/alarm.service');
 
 const PLC_HOST = '192.168.3.250';
@@ -19,6 +19,15 @@ const state = {
   dataBuffer: [],
   lastValuesByAddressId: {}
 };
+
+// Apply offset, scale, decimal conversion for number/number_gauge types
+function applyNumberConfig(value, numberConfig) {
+  if (!numberConfig) return value;
+  const { scale, offset, decimal_places } = numberConfig;
+  const scaledValue = (value * (scale || 1)) + (offset || 0);
+  const decimals = decimal_places || 0;
+  return Number(scaledValue.toFixed(decimals));
+}
 
 function parsePlcAddress(plcAddress) {
   const numericPart = parseInt(plcAddress.replace(/\D/g, ''), 10);
@@ -101,17 +110,20 @@ async function pollGroup(groupItems) {
 
   const now = new Date();
   groupItems.forEach(item => {
-    const val = roundResults[item.plc_address];
-    if (val === undefined) return;
+    const rawVal = roundResults[item.plc_address];
+    if (rawVal === undefined) return;
 
-    state.lastValuesByAddressId[item.id] = val;
+    // Apply number config transformation for number/number_gauge types
+    const processedVal = applyNumberConfig(rawVal, item.numberConfig);
+
+    state.lastValuesByAddressId[item.id] = processedVal;
     state.dataBuffer.push({
       address_id: item.id,
-      value: val,
+      value: processedVal,
       status: 1,
       created_at: now
     });
-    processAlarms(item.id, item.device_id, val).catch(() => {});
+    processAlarms(item.id, item.device_id, processedVal).catch(() => {});
   });
 }
 
@@ -121,7 +133,10 @@ async function startDynamicPolling() {
 
   try {
     const addresses = await DeviceAddress.findAll({
-      include: [{ model: Device, as: 'device' }]
+      include: [
+        { model: Device, as: 'device' },
+        { model: DeviceNumberConfig, as: 'numberConfig' }
+      ]
     });
 
     const groups = addresses.reduce((acc, addr) => {
