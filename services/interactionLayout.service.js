@@ -3,7 +3,7 @@ const { InteractionLayout, InteractionElement } = require('../models');
 // List all layouts
 exports.getAllLayouts = async () => {
   return await InteractionLayout.findAll({
-    order: [['created_at', 'DESC']]
+    order: [['id', 'ASC']]
   });
 };
 
