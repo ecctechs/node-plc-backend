@@ -68,22 +68,13 @@ exports.create = async (payload) => {
 exports.getLogsByAddressAndDate = async (params) => {
   const { address_id, start, end } = params;
   
-  // Parse date strings to Date objects explicitly
-  // This ensures consistent handling regardless of server timezone
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-    throw new Error('Invalid date format');
-  }
-  
   // Get the device address to check data_type
   const deviceAddress = await DeviceAddress.findByPk(address_id);
   if (!deviceAddress) {
     throw new Error('Device address not found');
   }
   
-  const logs = await repo.findByAddressAndDate({ address_id, start: startDate, end: endDate });
+  const logs = await repo.findByAddressAndDate(params);
   
   // If data_type is 'level', map values to level indices
   if (deviceAddress.data_type === 'level') {
