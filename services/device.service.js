@@ -68,45 +68,13 @@ exports.create = async (payload) => {
 exports.getLogsByAddressAndDate = async (params) => {
   const { address_id, start, end } = params;
   
-  // Parse date strings as Asia/Bangkok timezone (+07:00)
-  // This ensures consistent behavior regardless of server timezone
-  const bangkokOffset = 7 * 60 * 60 * 1000; // +07:00 in milliseconds
-  
-  const parseBangkokDate = (dateStr) => {
-    // Try to parse as ISO string first
-    let date = new Date(dateStr);
-    if (!isNaN(date.getTime())) {
-      // If the string doesn't contain timezone info, treat it as Bangkok time
-      if (!dateStr.includes('+') && dateStr.includes('T')) {
-        // Parse date components and create date in Bangkok timezone
-        const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
-        if (match) {
-          const [, year, month, day, hour, minute, second] = match.map(Number);
-          // Create date in UTC then adjust for Bangkok offset
-          date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-          date = new Date(date.getTime() + bangkokOffset);
-          return date;
-        }
-      }
-      return date;
-    }
-    throw new Error('Invalid date format');
-  };
-  
-  const startDate = parseBangkokDate(start);
-  const endDate = parseBangkokDate(end);
-  
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-    throw new Error('Invalid date format');
-  }
-  
   // Get the device address to check data_type
   const deviceAddress = await DeviceAddress.findByPk(address_id);
   if (!deviceAddress) {
     throw new Error('Device address not found');
   }
   
-  const logs = await repo.findByAddressAndDate({ address_id, start: startDate, end: endDate });
+  const logs = await repo.findByAddressAndDate(params);
   
   // If data_type is 'level', map values to level indices
   if (deviceAddress.data_type === 'level') {
