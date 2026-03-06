@@ -68,13 +68,30 @@ exports.create = async (payload) => {
 exports.getLogsByAddressAndDate = async (params) => {
   const { address_id, start, end } = params;
   
+  // Check environment - for production, adjust timezone to UTC
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  let startDate = new Date(start);
+  let endDate = new Date(end);
+  
+  // For production: subtract 7 hours (UTC offset) from start and end times
+  if (isProduction) {
+    const utcOffset = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+    startDate = new Date(startDate.getTime() - utcOffset);
+    endDate = new Date(endDate.getTime() - utcOffset);
+  }
+  
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    throw new Error('Invalid date format');
+  }
+  
   // Get the device address to check data_type
   const deviceAddress = await DeviceAddress.findByPk(address_id);
   if (!deviceAddress) {
     throw new Error('Device address not found');
   }
   
-  const logs = await repo.findByAddressAndDate(params);
+  const logs = await repo.findByAddressAndDate({ address_id, start: startDate, end: endDate });
   
   // If data_type is 'level', map values to level indices
   if (deviceAddress.data_type === 'level') {
