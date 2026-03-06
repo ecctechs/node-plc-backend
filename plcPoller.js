@@ -139,6 +139,8 @@ async function startDynamicPolling() {
       ]
     });
 
+    console.log('System: Found', addresses.length, 'addresses in DB');
+
     const groups = addresses.reduce((acc, addr) => {
       const rate = addr.refresh_rate_ms || DEFAULT_REFRESH_RATE_MS;
       acc[rate] = acc[rate] || [];
@@ -188,14 +190,15 @@ async function flushBufferToDb() {
 
 async function reloadPolling() {
   console.log('System: Reloading configuration...');
+  console.log('System: PLC connected status:', state.isPlcConnected);
 
-  if (state.isPlcConnected) {
-    await startDynamicPolling();
-    return;
+  // Always try to start dynamic polling, even if PLC is not connected
+  // This ensures new devices are included in polling when PLC reconnects
+  await startDynamicPolling();
+  
+  if (!state.isPlcConnected) {
+    console.log('System: PLC not connected, intervals set but waiting for reconnect.');
   }
-
-  clearPollingIntervals();
-  console.log('System: Intervals cleared, waiting for PLC reconnect.');
 }
 
 async function readSingleAddress(plcAddr) {
