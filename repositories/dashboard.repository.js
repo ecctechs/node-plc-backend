@@ -7,6 +7,8 @@ const {
   DeviceAlarmRule
 } = require('../models');
 
+const sequelize = require('../models/index').sequelize;
+
 exports.findAll = async () => {
   return await DashboardCard.findAll({
     where: { is_active: true },
@@ -44,3 +46,21 @@ exports.softDelete = (id) => DashboardCard.update({ is_active: false }, { where:
 
 // Hard delete
 exports.hardDelete = (id) => DashboardCard.destroy({ where: { id } });
+
+// Reindex all active cards for a user (consecutive 1, 2, 3, ...)
+exports.reindexAll = async (userId) => {
+  const cards = await DashboardCard.findAll({
+    where: { user_id: userId, is_active: true },
+    order: [['position', 'ASC']],
+    attributes: ['id']
+  });
+
+  for (let i = 0; i < cards.length; i++) {
+    await DashboardCard.update(
+      { position: i + 1 },
+      { where: { id: cards[i].id } }
+    );
+  }
+
+  return cards.length;
+};

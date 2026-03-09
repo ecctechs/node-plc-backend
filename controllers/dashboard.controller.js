@@ -1,5 +1,6 @@
 const dashboardService = require('../services/dashboard.service');
 const { DashboardCard, DeviceAddress, DeviceNumberConfig, DeviceAlarmRule } = require('../models');
+const sequelize = require('../models/index').sequelize;
 
 exports.getCards = async (req, res) => {
   try {
@@ -13,7 +14,7 @@ exports.getCards = async (req, res) => {
 exports.createCard = async (req, res) => {
   try {
     const userId = 1;
-    const { address_id, display_type } = req.body;
+    const { address_id, display_type, position } = req.body;
 
     if (!address_id || !display_type) {
       return res.status(400).json({ message: 'address_id and display_type are required' });
@@ -24,12 +25,26 @@ exports.createCard = async (req, res) => {
       return res.status(404).json({ message: 'Address not found' });
     }
 
+    let finalPosition;
+
+    if (position !== undefined && position !== null) {
+      // Shift existing cards at or after the given position
+      await DashboardCard.update(
+        { position: sequelize.literal('position + 1') },
+        { where: { user_id: userId, position: { [sequelize.Sequelize.Op.gte]: position } } }
+      );
+      finalPosition = position;
+    } else {
+      // Default: append to end
+      finalPosition = await DashboardCard.count({ where: { user_id: userId, is_active: true } }) + 1;
+    }
+
     const card = await DashboardCard.create({
       user_id: userId,
       device_id: address.device_id,
       address_id,
       display_type,
-      position: await DashboardCard.count({ where: { user_id: userId } }) + 1,
+      position: finalPosition,
       is_active: true
     });
 
@@ -45,7 +60,12 @@ exports.deleteCard = async (req, res) => {
     const { id } = req.params;
     const userId = req.user?.id || 1;
 
+    // Delete the card
     await dashboardService.deleteCard(id, userId);
+
+    // Reindex all active cards
+    await dashboardService.reindexAll(userId);
+
     res.json({ success: true, message: 'Dashboard card deleted' });
   } catch (err) {
     console.error(err);

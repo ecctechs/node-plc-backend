@@ -73,3 +73,7 @@ exports.deleteCard = async (cardId, userId) => {
 
   await dashboardRepo.softDelete(cardId);
 };
+
+exports.reindexAll = async (userId) => {
+  return await dashboardRepo.reindexAll(userId);
+};
