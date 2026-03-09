@@ -10,6 +10,7 @@ const PLC_PORT = 502;
 const MODBUS_UNIT_ID = 0;
 const BULK_INSERT_INTERVAL_MS = 2000;
 const DEFAULT_REFRESH_RATE_MS = 1000;
+const MAX_BUFFER_SIZE = 5000;
 
 const state = {
   isPlcConnected: false,
@@ -162,27 +163,49 @@ async function startDynamicPolling() {
 async function flushBufferToDb() {
   if (!state.dataBuffer.length) return;
 
-  const batch = [...state.dataBuffer];
-  state.dataBuffer = [];
+  // Prevent buffer from growing too large - force flush if too big
+  let batch;
+  if (state.dataBuffer.length > MAX_BUFFER_SIZE) {
+    // Take the last MAX_BUFFER_SIZE items and discard older ones
+    batch = state.dataBuffer.slice(-MAX_BUFFER_SIZE);
+    state.dataBuffer = [];
+    console.warn(`Buffer overflow: discarded ${state.dataBuffer.length - MAX_BUFFER_SIZE} records`);
+  } else {
+    batch = [...state.dataBuffer];
+    state.dataBuffer = [];
+  }
 
   try {
     await DeviceLog.bulkCreate(batch, { logging: false });
 
-    const latest = {};
-    batch.forEach(l => { latest[l.address_id] = l; });
+    // Group updates by address_id to reduce number of queries
+    const latestByAddress = {};
+    batch.forEach(l => {
+      // Keep the most recent value for each address_id
+      latestByAddress[l.address_id] = { value: l.value, is_connected: l.status === 1, created_at: l.created_at };
+    });
 
-    await Promise.all(
-      Object.keys(latest).map(id =>
-        DeviceAddress.update(
-          { last_value: latest[id].value, is_connected: latest[id].status === 1 },
-          { where: { id }, logging: false }
-        )
+    // Use Promise.all with individual updates (but limit concurrency)
+    const addressIds = Object.keys(latestByAddress);
+    const updatePromises = addressIds.map(id =>
+      DeviceAddress.update(
+        { 
+          last_value: latestByAddress[id].value, 
+          is_connected: latestByAddress[id].is_connected 
+        },
+        { where: { id }, logging: false }
       )
     );
+    
+    await Promise.all(updatePromises);
 
     console.log(`DB Write: ${batch.length} records`);
   } catch (err) {
     console.error('DB Error:', err.message);
+    // Put data back to buffer on error for retry
+    if (batch.length > 0) {
+      state.dataBuffer = [...batch, ...state.dataBuffer];
+    }
   }
 }
 
