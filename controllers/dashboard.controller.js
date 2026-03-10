@@ -72,3 +72,36 @@ exports.deleteCard = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+exports.updateCard = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id || 1;
+    const { card_id, selectedDeviceId, selectedAddressId, selectedDisplayType, selectedPosition } = req.body;
+
+    // Map frontend field names to backend field names
+    const device_id = selectedDeviceId;
+    const address_id = selectedAddressId;
+    const display_type = selectedDisplayType;
+    const position = selectedPosition;
+
+    if (!device_id && !address_id && !display_type && position === undefined && !card_id) {
+      return res.status(400).json({ success: false, message: 'At least one field to update is required' });
+    }
+
+    const card = await dashboardService.updateCard(id, userId, {
+      device_id,
+      address_id,
+      display_type,
+      position
+    });
+
+    // Reindex all active cards after update
+    await dashboardService.reindexAll(userId);
+
+    res.json({ success: true, data: card });
+  } catch (err) {
+    console.error(err);
+    res.status(err.status || 500).json({ success: false, message: err.message });
+  }
+};

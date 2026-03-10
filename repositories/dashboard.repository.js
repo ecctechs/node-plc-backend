@@ -41,6 +41,9 @@ exports.create = (data) => DashboardCard.create(data);
 
 exports.findById = (id) => DashboardCard.findByPk(id);
 
+// Update dashboard card
+exports.update = (id, data) => DashboardCard.update(data, { where: { id } });
+
 // Soft delete (set is_active = false)
 exports.softDelete = (id) => DashboardCard.update({ is_active: false }, { where: { id } });
 

@@ -1,4 +1,5 @@
 const dashboardRepo = require('../repositories/dashboard.repository');
+const { DeviceAddress } = require('../models');
 
 exports.getCards = async () => {
   const cards = await dashboardRepo.findAll();
@@ -76,4 +77,30 @@ exports.deleteCard = async (cardId, userId) => {
 
 exports.reindexAll = async (userId) => {
   return await dashboardRepo.reindexAll(userId);
+};
+
+exports.updateCard = async (cardId, userId, payload) => {
+  const { device_id, address_id, display_type, position } = payload;
+
+  const card = await dashboardRepo.findById(cardId);
+  if (!card) throw { status: 404, message: 'Dashboard card not found' };
+
+  // Prevent cross-user update
+  if (card.user_id !== userId) throw { status: 403, message: 'Permission denied' };
+
+  // Validate address_id if provided
+  if (address_id) {
+    const address = await DeviceAddress.findByPk(address_id);
+    if (!address) throw { status: 404, message: 'Address not found' };
+  }
+
+  const updateData = {};
+  if (device_id !== undefined) updateData.device_id = device_id;
+  if (address_id !== undefined) updateData.address_id = address_id;
+  if (display_type !== undefined) updateData.display_type = display_type;
+  if (position !== undefined) updateData.position = position;
+
+  await dashboardRepo.update(cardId, updateData);
+
+  return await dashboardRepo.findById(cardId);
 };
