@@ -12,6 +12,46 @@ exports.create = async (req, res) => {
   }
 };
 
+// PUT /api/alarms/:alarmId
+exports.update = async (req, res) => {
+  try {
+    const data = await service.updateAlarm(req.params.alarmId, req.body);
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// DELETE /api/alarms/:alarmId
+exports.delete = async (req, res) => {
+  try {
+    await service.deleteAlarm(req.params.alarmId);
+    res.json({ message: 'Alarm deactivated successfully' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// GET /api/addresses/:addressId/alarms
+exports.getByAddressId = async (req, res) => {
+  try {
+    const data = await service.getByAddressId(req.params.addressId);
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// GET /api/alarms/:alarmId
+exports.getById = async (req, res) => {
+  try {
+    const data = await service.getById(req.params.alarmId);
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
 // GET /api/events/all?start&end
 exports.getHistoryAll = async (req, res) => {
   try {

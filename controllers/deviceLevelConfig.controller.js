@@ -9,3 +9,13 @@ exports.syncLevels = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+// GET /api/addresses/:addressId/levels
+exports.getByAddressId = async (req, res) => {
+  try {
+    const data = await service.getByAddressId(req.params.addressId);
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};

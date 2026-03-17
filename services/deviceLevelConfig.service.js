@@ -21,6 +21,15 @@ exports.syncLevels = async (addressId, levelsArray) => {
   return saved;
 };
 
+// GET all level configs for an address
+exports.getByAddressId = async (addressId) => {
+  const address = await addressRepo.findById(addressId);
+  if (!address) throw new Error('Address not found');
+
+  const levels = await repo.findByAddressId(addressId);
+  return levels;
+};
+
 function validateLevel(p, isUpdate = false) {
   if (!isUpdate && (!p.label || !p.condition_type)) {
     throw new Error('label and condition_type are required');

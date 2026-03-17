@@ -3,7 +3,11 @@ const service = require('../services/device.service');
 // GET /api/devices
 exports.getDevices = async (req, res) => {
   try {
-    const data = await service.list();
+    const filter = {};
+    if (req.query.is_active !== undefined) {
+      filter.is_active = req.query.is_active;
+    }
+    const data = await service.list(filter);
     res.json(data);
   } catch (e) {
     res.status(500).json({ message: e.message });
@@ -17,6 +21,39 @@ exports.createDevice = async (req, res) => {
     res.status(201).json(data);
   } catch (e) {
     res.status(400).json({ message: e.message });
+  }
+};
+
+// GET /api/devices/:id
+exports.getDeviceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const device = await service.getById(id);
+    res.json({ success: true, data: device });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, message: err.message });
+  }
+};
+
+// PUT /api/devices/:id
+exports.updateDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const device = await service.update(id, req.body);
+    res.json({ success: true, data: device });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, message: err.message });
+  }
+};
+
+// DELETE /api/devices/:id
+exports.deleteDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await service.delete(id);
+    res.json({ success: true, message: 'ลบอุปกรณ์สำเร็จ' });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, message: err.message });
   }
 };
 

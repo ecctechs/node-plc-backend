@@ -2,12 +2,31 @@ const {
   DashboardCard,
   DeviceAddress,
   Device,
+  DeviceType,
   DeviceNumberConfig,
   DeviceLevelConfig,
-  DeviceAlarmRule
+  DeviceAlarmRule,
+  Room
 } = require('../models');
 
 const sequelize = require('../models/index').sequelize;
+
+// Find device addresses by device_type_id where data_type matches display_types
+exports.findAddressesByDeviceTypeAndDisplayTypes = async (deviceTypeId, displayTypes) => {
+  return await DeviceAddress.findAll({
+    include: [
+      {
+        model: Device,
+        as: 'device',
+        where: { device_type_id: deviceTypeId },
+        attributes: ['id', 'name', 'device_type_id']
+      }
+    ],
+    where: {
+      data_type: displayTypes
+    }
+  });
+};
 
 exports.findAll = async () => {
   return await DashboardCard.findAll({
@@ -16,11 +35,22 @@ exports.findAll = async () => {
       {
         model: DeviceAddress,
         as: 'address',
+        required: true,
         include: [
-          { model: Device, as: 'device', attributes: ['id', 'name', 'device_type'] },
-          { model: DeviceNumberConfig, as: 'numberConfig' },
-          { model: DeviceLevelConfig, as: 'levels' },
-          { model: DeviceAlarmRule, as: 'alarms' }
+          { 
+            model: Device, 
+            as: 'device', 
+            required: true,
+            where: { is_active: true },
+            attributes: ['id', 'name', 'device_type_id', 'room_id'],
+            include: [
+              { model: DeviceType, as: 'deviceType', attributes: ['id', 'name'], required: false },
+              { model: Room, as: 'room', attributes: ['id', 'name'], required: false }
+            ]
+          },
+          { model: DeviceNumberConfig, as: 'numberConfig', required: false },
+          { model: DeviceLevelConfig, as: 'levels', required: false },
+          { model: DeviceAlarmRule, as: 'alarms', required: false }  
         ]
       }
     ],
