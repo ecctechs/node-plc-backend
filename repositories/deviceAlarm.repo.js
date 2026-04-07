@@ -1,6 +1,6 @@
 'use strict';
 
-const { DeviceAlarmRule, DeviceAlarmEvent, Device, DeviceAddress } = require('../models');
+const { DeviceAlarmRule, DeviceAlarmEvent, Device, DeviceAddress , Room } = require('../models');
 const { Op } = require('sequelize');
 
 exports.createRule = async (data) => DeviceAlarmRule.create(data);
@@ -34,7 +34,7 @@ exports.findAllEvents = (startDate, endDate) => {
     where: { created_at: getDateRange(startDate, endDate) },
     include: [
       { model: DeviceAlarmRule, as: 'rule', attributes: ['name', 'condition_type', 'min_value', 'max_value'] },
-      { model: Device, as: 'device', attributes: ['name'] }
+      { model: Device, as: 'device', attributes: ['name'] , include: [{ model: Room, as: 'room', attributes: ['name'] }]}
     ],
     order: [['created_at', 'DESC']]
   });

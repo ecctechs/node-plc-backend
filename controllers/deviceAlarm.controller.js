@@ -64,6 +64,7 @@ exports.getHistoryAll = async (req, res) => {
       created_at: e.created_at,
       rule: e.rule,
       device: e.device,
+      room_name: e.device?.room?.name,
       address_id: e.address_id
     }));
     res.json(formatEvent(events));
