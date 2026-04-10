@@ -10,7 +10,12 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false
     },
     updated_at: DataTypes.DATE(3),
-    refresh_rate_ms:DataTypes.INTEGER
+    refresh_rate_ms:DataTypes.INTEGER,
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    }
   }, {
     tableName: 'device_addresses',
     underscored: true

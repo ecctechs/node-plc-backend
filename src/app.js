@@ -13,5 +13,7 @@ app.use('/api', require('../routes/deviceNumberConfig.route'));
 app.use('/api', require('../routes/deviceLevelConfig.route'));
 app.use('/api/dashboard', require('../routes/dashboard.routes'));
 app.use('/api/interaction', require('../routes/interactionLayout.route'));
+app.use('/api/device-types', require('../routes/deviceType.route'));
+app.use('/api/rooms', require('../routes/room.route'));
 
 module.exports = app;
