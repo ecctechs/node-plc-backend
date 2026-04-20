@@ -12,7 +12,7 @@ exports.create = async (data) => {
   return await sequelize.transaction(async (t) => {
     const device = await Device.create({
       name: data.name,
-      device_type: data.device_type,
+      // device_type: data.device_type,
       refresh_rate_ms: Math.max(50, Number(data.refresh_rate_ms) || 50),
       is_active: true
     }, { transaction: t });

@@ -16,7 +16,7 @@ exports.getCards = async () => {
       device: {
         id: addr.device.id,
         name: addr.device.name,
-        type: addr.device.device_type
+        // type: addr.device.device_type
       },
       label: addr.label,
       plc_address: addr.plc_address,

@@ -15,7 +15,7 @@ exports.findAll = async () => {
         model: DeviceAddress,
         as: 'address',
         include: [
-          { model: Device, as: 'device', attributes: ['id', 'name', 'device_type'] },
+          { model: Device, as: 'device', attributes: ['id', 'name'] },
           { model: DeviceNumberConfig, as: 'numberConfig' },
           { model: DeviceLevelConfig, as: 'levels' },
           { model: DeviceAlarmRule, as: 'alarms' }

@@ -15,11 +15,11 @@ module.exports = {
         allowNull: false
       },
 
-      device_type: {
-        type: Sequelize.TEXT,
-        allowNull: false
-        // lamp, pump, motor
-      },
+      // device_type: {
+      //   type: Sequelize.TEXT,
+      //   allowNull: false
+      //   // lamp, pump, motor
+      // },
 
       data_display_type: {
         type: Sequelize.TEXT,
