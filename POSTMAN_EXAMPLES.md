@@ -7,6 +7,227 @@ http://localhost:3000/api
 
 ---
 
+## Products APIs
+
+### Base URL
+```
+http://localhost:3000/api/products
+```
+
+### 1.1 Get All Products
+**Endpoint:** `GET /products`
+
+**Description:** Get all products.
+
+**Postman Setup:**
+- Method: `GET`
+- URL: `{{baseUrl}}/products`
+
+**Response Example:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Product A",
+    "image_path": "https://res.cloudinary.com/dse3aqfrm/image/upload/v1713600000/products/1234567890.png",
+    "cycle_time": 5.5,
+    "plc_address_output": "DB100.DBD0",
+    "plc_address_active": "DB100.DBX0.0",
+    "created_at": "2026-04-21T09:00:00.000Z",
+    "updated_at": "2026-04-21T09:00:00.000Z"
+  }
+]
+```
+
+### 1.2 Create Product
+**Endpoint:** `POST /products`
+
+**Description:** Create a new product. Supports file upload for product image.
+
+**Request Body (JSON only):**
+```json
+{
+  "name": "Product A",
+  "cycle_time": 5.5,
+  "plc_address_output": "DB100.DBD0",
+  "plc_address_active": "DB100.DBX0.0"
+}
+```
+
+**Postman Setup (JSON only):**
+- Method: `POST`
+- URL: `{{baseUrl}}/products`
+- Body: Select `raw` → `JSON` and paste the request body above
+
+**Postman Setup (with image upload):**
+- Method: `POST`
+- URL: `{{baseUrl}}/products`
+- Body: Select `form-data`
+- Add fields:
+  - `name`: "Product A"
+  - `cycle_time`: "5.5"
+  - `plc_address_output`: "DB100.DBD0"
+  - `plc_address_active`: "DB100.DBX0.0"
+  - `image`: (select file fromyour computer)
+
+### 1.3 Get Product by ID
+**Endpoint:** `GET /products/:id`
+
+**Description:** Get a product by ID.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | The ID of the product |
+
+**Postman Setup:**
+- Method: `GET`
+- URL: `{{baseUrl}}/products/1`
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Product A",
+    "image_path": "https://res.cloudinary.com/dse3aqfrm/image/upload/v1713600000/products/1234567890.png",
+    "cycle_time": 5.5,
+    "plc_address_output": "DB100.DBD0",
+    "plc_address_active": "DB100.DBX0.0",
+    "created_at": "2026-04-21T09:00:00.000Z",
+    "updated_at": "2026-04-21T09:00:00.000Z"
+  }
+}
+```
+
+### 1.4 Update Product
+**Endpoint:** `PUT /products/:id`
+
+**Description:** Update an existing product. Supports file upload for updating product image.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | The ID of the product |
+
+**Request Body (JSON only):**
+```json
+{
+  "name": "Product A Updated",
+  "cycle_time": 6.0
+}
+```
+
+**Postman Setup (JSON only):**
+- Method: `PUT`
+- URL: `{{baseUrl}}/products/1`
+- Body: Select `raw` → `JSON` and paste the request body above
+
+**Postman Setup (with image upload):**
+- Method: `PUT`
+- URL: `{{baseUrl}}/products/1`
+- Body: Select `form-data`
+- Add fields:
+  - `name`: "Product A Updated"
+  - `cycle_time`: "6.0"
+  - `image`: (select file from your computer to update image)
+
+### 1.5 Delete Product
+**Endpoint:** `DELETE /products/:id`
+
+**Description:** Delete a product.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | integer | The ID of the product |
+
+**Postman Setup:**
+- Method: `DELETE`
+- URL: `{{baseUrl}}/products/1`
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "ลบสินค้าสำเร็จ"
+}
+```
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+```json
+{
+  "message": "name is required"
+}
+```
+
+### 400 Bad Request
+```json
+{
+  "message": "ชื่อสินค้า \"Product A\" มีอยู่แล้ว"
+}
+```
+
+### 404 Not Found
+```json
+{
+  "success": false,
+  "message": "ไม่พบสินค้านี้"
+}
+```
+
+### 409 Conflict
+```json
+{
+  "success": false,
+  "message": "ชื่อสินค้านี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น"
+}
+```
+
+---
+
+## Postman Collection Example
+
+You can create a Postman collection with these requests:
+
+### Collection: Product APIs
+
+1. **Get All Products**
+   - Method: GET
+   - URL: `{{baseUrl}}/products`
+
+2. **Create Product**
+   - Method: POST
+   - URL: `{{baseUrl}}/products`
+
+3. **Get Product by ID**
+   - Method: GET
+   - URL: `{{baseUrl}}/products/1`
+
+4. **Update Product**
+   - Method: PUT
+   - URL: `{{baseUrl}}/products/1`
+
+5. **Delete Product**
+   - Method: DELETE
+   - URL: `{{baseUrl}}/products/1`
+
+---
+
+# API Documentation - Device Number Config & Level Config
+
+## Base URL
+```
+http://localhost:3000/api
+```
+
+---
+
 ## 1. Number Config APIs
 
 ### 1.1 Create Number Config

@@ -5,11 +5,13 @@
     "sequelize-cli": "^6.6.5"
   },
   "dependencies": {
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsmodbus": "^4.0.10",
     "modbus-serial": "^8.0.23",
+    "multer": "^2.1.1",
     "nodemailer": "^7.0.12",
     "nodes7": "^0.3.18",
     "pg": "^8.16.3",
