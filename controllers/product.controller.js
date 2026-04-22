@@ -83,3 +83,21 @@ exports.deleteProduct = async (req, res) => {
     res.status(err.status || 500).json({ success: false, message: err.message });
   }
 };
+
+exports.updatePlcAddresses = async (req, res) => {
+  try {
+    const data = await service.updatePlcAddresses(req.body);
+    res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+exports.getPlcAddresses = async (req, res) => {
+  try {
+    const data = await service.getPlcAddresses();
+    res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

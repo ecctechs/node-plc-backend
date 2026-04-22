@@ -61,3 +61,35 @@ exports.delete = async (id) => {
   await repo.delete(id);
   return { success: true, message: 'ลบสินค้าสำเร็จ' };
 };
+
+exports.updatePlcAddresses = async (payload) => {
+  const { plc_address_output, plc_address_active } = payload;
+
+  if (plc_address_output === undefined && plc_address_active === undefined) {
+    throw new Error('plc_address_output or plc_address_active is required');
+  }
+
+  const products = await repo.findAll({});
+  const updateData = {};
+  if (plc_address_output !== undefined) updateData.plc_address_output = plc_address_output;
+  if (plc_address_active !== undefined) updateData.plc_address_active = plc_address_active;
+
+  for (const product of products) {
+    await repo.update(product.id, updateData);
+  }
+
+  return { success: true, message: 'อัพเดต PLC addresses สำเร็จ', updated: products.length };
+};
+
+exports.getPlcAddresses = async () => {
+  const products = await repo.findAll({});
+  
+  if (products.length === 0) {
+    return { plc_address_output: null, plc_address_active: null };
+  }
+
+  return {
+    plc_address_output: products[0].plc_address_output,
+    plc_address_active: products[0].plc_address_active
+  };
+};
