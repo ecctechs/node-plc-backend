@@ -38,6 +38,17 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'PLC Address for running status signal'
     },
+    total_output: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+      comment: 'Total output count'
+    },
+    plc_address_complete: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'PLC Address for complete signal'
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,

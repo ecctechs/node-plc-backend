@@ -12,7 +12,7 @@ exports.getById = async (id) => {
 };
 
 exports.create = async (payload) => {
-  const { name, image_path, cycle_time, plc_address_output, plc_address_active } = payload;
+  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete } = payload;
 
   if (!name) {
     throw new Error('name is required');
@@ -26,7 +26,9 @@ exports.create = async (payload) => {
     image_path,
     cycle_time,
     plc_address_output,
-    plc_address_active
+    plc_address_active,
+    total_output,
+    plc_address_complete
   });
 
   return product;
@@ -36,7 +38,7 @@ exports.update = async (id, payload) => {
   const product = await repo.findById(id);
   if (!product) throw { status: 404, message: 'ไม่พบสินค้านี้' };
 
-  const { name, image_path, cycle_time, plc_address_output, plc_address_active } = payload;
+  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete } = payload;
 
   if (name && name !== product.name) {
     const exists = await repo.findByName(name);
@@ -49,6 +51,8 @@ exports.update = async (id, payload) => {
   if (cycle_time !== undefined) updateData.cycle_time = cycle_time;
   if (plc_address_output !== undefined) updateData.plc_address_output = plc_address_output;
   if (plc_address_active !== undefined) updateData.plc_address_active = plc_address_active;
+  if (total_output !== undefined) updateData.total_output = total_output;
+  if (plc_address_complete !== undefined) updateData.plc_address_complete = plc_address_complete;
 
   await repo.update(id, updateData);
   return await repo.findById(id);
@@ -63,16 +67,17 @@ exports.delete = async (id) => {
 };
 
 exports.updatePlcAddresses = async (payload) => {
-  const { plc_address_output, plc_address_active } = payload;
+  const { plc_address_output, plc_address_active, plc_address_complete } = payload;
 
-  if (plc_address_output === undefined && plc_address_active === undefined) {
-    throw new Error('plc_address_output or plc_address_active is required');
+  if (plc_address_output === undefined && plc_address_active === undefined && plc_address_complete === undefined) {
+    throw new Error('plc_address_output, plc_address_active, or plc_address_complete is required');
   }
 
   const products = await repo.findAll({});
   const updateData = {};
   if (plc_address_output !== undefined) updateData.plc_address_output = plc_address_output;
   if (plc_address_active !== undefined) updateData.plc_address_active = plc_address_active;
+  if (plc_address_complete !== undefined) updateData.plc_address_complete = plc_address_complete;
 
   for (const product of products) {
     await repo.update(product.id, updateData);
@@ -83,13 +88,14 @@ exports.updatePlcAddresses = async (payload) => {
 
 exports.getPlcAddresses = async () => {
   const products = await repo.findAll({});
-  
+
   if (products.length === 0) {
-    return { plc_address_output: null, plc_address_active: null };
+    return { plc_address_output: null, plc_address_active: null, plc_address_complete: null };
   }
 
   return {
     plc_address_output: products[0].plc_address_output,
-    plc_address_active: products[0].plc_address_active
+    plc_address_active: products[0].plc_address_active,
+    plc_address_complete: products[0].plc_address_complete
   };
 };
