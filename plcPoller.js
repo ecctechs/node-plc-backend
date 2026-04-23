@@ -4,6 +4,10 @@ const net = require('net');
 const Modbus = require('jsmodbus');
 const { DeviceAddress, DeviceNumberConfig, DeviceLog, Device } = require('./models');
 const { processAlarms } = require('./src/services/alarm.service');
+const service = require('./services/product.service');
+const repo = require('./repositories/product.repo');
+const { logEvent: logDowntimeEvent } = require('./services/downtimeLog.service');
+const { logEvent: logDowntimeEventProduct } = require('./services/downtimeProduct.service');
 
 const PLC_HOST = '192.168.3.250';
 const PLC_PORT = 502;
@@ -124,6 +128,7 @@ async function pollGroup(groupItems) {
       status: 1,
       created_at: now
     });
+    getOpertionTime();
     processAlarms(item.id, item.device_id, processedVal).catch(() => {});
   });
 }
@@ -139,6 +144,7 @@ async function startDynamicPolling() {
         { model: DeviceNumberConfig, as: 'numberConfig' }
       ]
     });
+
 
     const groups = addresses.reduce((acc, addr) => {
       const rate = addr.refresh_rate_ms || DEFAULT_REFRESH_RATE_MS;
@@ -303,6 +309,27 @@ function startPollWorker() {
   });
 
   connectPLC();
+}
+
+async function getOpertionTime() {
+  const data = await service.getPlcAddresses();
+  const plc_onoff = data.plc_address_output;
+  const plc_active = data.plc_address_active;
+  const plc_complete = data.plc_address_complete;
+  const operationTime = await readModbusValue(plc_active);
+  const plcOnoffValue = await readModbusValue(plc_onoff);
+
+  const products = await repo.findAll({});
+  const productId = products[0]?.id;
+
+  if (plcOnoffValue === 0) {
+    await logDowntimeEventProduct(productId, 'START', 'rule.name');
+  }else{
+    await logDowntimeEventProduct(productId, 'END', 'rule.name');
+  }
+
+  // console.log(operationTime);
+  // console.log(plc_onoff);
 }
 
 module.exports = { startPollWorker, reloadPolling, readSingleAddress, writeSingleAddress, isPlcConnected: () => state.isPlcConnected };
