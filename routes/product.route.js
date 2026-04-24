@@ -4,6 +4,7 @@ const controller = require('../controllers/product.controller');
 
 router.put('/plc-addresses', controller.updatePlcAddresses);
 router.get('/plc-addresses', controller.getPlcAddresses);
+router.get('/latest-log', controller.getLatestProductLog);
 
 router.get('/', controller.getProducts);
 router.post('/', controller.upload.single('image'), controller.createProduct);

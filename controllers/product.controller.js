@@ -2,6 +2,7 @@ const service = require('../services/product.service');
 const cloudinary = require('../services/cloudinary.service');
 const multer = require('multer');
 const path = require('path');
+const productLogService = require('../services/productLog.service');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -97,6 +98,15 @@ exports.getPlcAddresses = async (req, res) => {
   try {
     const data = await service.getPlcAddresses();
     res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getLatestProductLog = async (req, res) => {
+  try {
+    const data = await productLogService.getLatest();
+    res.json({ success: true, data: data || null });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
