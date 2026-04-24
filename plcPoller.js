@@ -311,27 +311,92 @@ function startPollWorker() {
   connectPLC();
 }
 
+let prevComplete = 0;
+const { Product } = require('./models');
+
 async function getOpertionTime() {
-  const data = await service.getPlcAddresses();
-  const plc_onoff = data.plc_address_output;
-  const plc_active = data.plc_address_active;
-  const plc_complete = data.plc_address_complete;
-  const operationTime = await readModbusValue(plc_active);
-  const plcOnoffValue = await readModbusValue(plc_onoff);
+  try {
+    const data = await service.getPlcAddresses();
 
-  const products = await repo.findAll({});
-  const productId = products[0]?.id;
+    const plc_onoff = data.plc_address_output;
+    const plc_active = data.plc_address_active;
+    const plc_complete = data.plc_address_complete;
 
-  if (plcOnoffValue === 0) {
-    await logDowntimeEventProduct(productId, 'START', 'rule.name');
-  }else{
-    await logDowntimeEventProduct(productId, 'END', 'rule.name');
+    // =========================
+    // 1. Validate address
+    // =========================
+    if (
+      plc_onoff == null ||
+      plc_active == null ||
+      plc_complete == null
+    ) {
+      console.error("❌ PLC Address is missing");
+      return;
+    }
+
+    let plcOnoffValue = 0;
+    let runningValue = "";
+    let completeValue = 0;
+
+    // =========================
+    // 2. Read PLC (แยก try)
+    // =========================
+    try {
+      plcOnoffValue = await readModbusValue(plc_onoff);
+      runningValue = await readModbusValue(plc_active);
+      completeValue = await readModbusValue(plc_complete);
+    } catch (err) {
+      console.error("❌ PLC Read Error:", err.message);
+      return; // หยุดรอบนี้ ไม่ให้ระบบล่ม
+    }
+
+    const products = await repo.findAll({});
+    const product = products[0];
+    const productId = product?.id;
+
+    if (!productId) {
+      console.error("❌ Product not found");
+      return;
+    }
+
+    // =========================
+    // 3. Downtime Logic
+    // =========================
+    try {
+      if (plcOnoffValue === 0) {
+        await logDowntimeEventProduct(productId, 'START', 'rule.name');
+      } else {
+        await logDowntimeEventProduct(productId, 'END', 'rule.name');
+      }
+    } catch (err) {
+      console.error("❌ Downtime Log Error:", err.message);
+    }
+
+    // =========================
+    // 4. Total Output Logic
+    // =========================
+    try {
+      if (prevComplete === 0 && completeValue === 1) {
+        await Product.increment(
+          { total_output: 1 },
+          { where: { id: productId } }
+        );
+
+        console.log("✅ Output +1");
+      }
+    } catch (err) {
+      console.error("❌ Increment Error:", err.message);
+    }
+
+    // =========================
+    // 5. Update state
+    // =========================
+    prevComplete = completeValue;
+
+  } catch (err) {
+    console.error("🔥 getOpertionTime ERROR:", err);
   }
-
-  // console.log(operationTime);
-  // console.log(plc_onoff);
 }
-
 module.exports = { startPollWorker, reloadPolling, readSingleAddress, writeSingleAddress, isPlcConnected: () => state.isPlcConnected };
 
 if (require.main === module) {
