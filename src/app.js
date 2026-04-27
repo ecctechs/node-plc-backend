@@ -15,5 +15,8 @@ app.use('/api/dashboard', require('../routes/dashboard.routes'));
 app.use('/api/interaction', require('../routes/interactionLayout.route'));
 app.use('/api/device-types', require('../routes/deviceType.route'));
 app.use('/api/rooms', require('../routes/room.route'));
+app.use('/api/products', require('../routes/product.route'));
+app.use('/api/downtime', require('../routes/downtimeLog.route'));
+app.use('/api/downtime-products', require('../routes/downtimeProduct.route'));
 
 module.exports = app;

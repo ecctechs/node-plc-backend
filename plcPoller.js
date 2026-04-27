@@ -2,8 +2,12 @@
 
 const net = require('net');
 const Modbus = require('jsmodbus');
-const { DeviceAddress, DeviceNumberConfig, DeviceLog, Device } = require('./models');
+const { DeviceAddress, DeviceNumberConfig, DeviceLog, Device, ProductLog } = require('./models');
 const { processAlarms } = require('./src/services/alarm.service');
+const service = require('./services/product.service');
+const repo = require('./repositories/product.repo');
+const { logEvent: logDowntimeEvent } = require('./services/downtimeLog.service');
+const { logEvent: logDowntimeEventProduct } = require('./services/downtimeProduct.service');
 
 const PLC_HOST = '192.168.3.250';
 const PLC_PORT = 502;
@@ -18,7 +22,8 @@ const state = {
   socket: null,
   client: null,
   dataBuffer: [],
-  lastValuesByAddressId: {}
+  lastValuesByAddressId: {},
+  productLogBuffer: []
 };
 
 // Apply offset, scale, decimal conversion for number/number_gauge types
@@ -108,7 +113,7 @@ async function pollGroup(groupItems) {
     console.error('Polling Error:', err.message);
     return;
   }
-
+  getOpertionTime();
   const now = new Date();
   groupItems.forEach(item => {
     const rawVal = roundResults[item.plc_address];
@@ -140,6 +145,7 @@ async function startDynamicPolling() {
       ]
     });
 
+
     const groups = addresses.reduce((acc, addr) => {
       const rate = addr.refresh_rate_ms || DEFAULT_REFRESH_RATE_MS;
       acc[rate] = acc[rate] || [];
@@ -161,50 +167,77 @@ async function startDynamicPolling() {
 }
 
 async function flushBufferToDb() {
-  if (!state.dataBuffer.length) return;
+  // Flush device logs buffer
+  if (state.dataBuffer.length) {
+    // Prevent buffer from growing too large - force flush if too big
+    let batch;
+    if (state.dataBuffer.length > MAX_BUFFER_SIZE) {
+      // Take the last MAX_BUFFER_SIZE items and discard older ones
+      batch = state.dataBuffer.slice(-MAX_BUFFER_SIZE);
+      state.dataBuffer = [];
+      console.warn(`Buffer overflow: discarded ${state.dataBuffer.length - MAX_BUFFER_SIZE} records`);
+    } else {
+      batch = [...state.dataBuffer];
+      state.dataBuffer = [];
+    }
 
-  // Prevent buffer from growing too large - force flush if too big
-  let batch;
-  if (state.dataBuffer.length > MAX_BUFFER_SIZE) {
-    // Take the last MAX_BUFFER_SIZE items and discard older ones
-    batch = state.dataBuffer.slice(-MAX_BUFFER_SIZE);
-    state.dataBuffer = [];
-    console.warn(`Buffer overflow: discarded ${state.dataBuffer.length - MAX_BUFFER_SIZE} records`);
-  } else {
-    batch = [...state.dataBuffer];
-    state.dataBuffer = [];
+    try {
+      await DeviceLog.bulkCreate(batch, { logging: false });
+
+      // Group updates by address_id to reduce number of queries
+      const latestByAddress = {};
+      batch.forEach(l => {
+        // Keep the most recent value for each address_id
+        latestByAddress[l.address_id] = { value: l.value, is_connected: l.status === 1, created_at: l.created_at };
+      });
+
+      // Use Promise.all with individual updates (but limit concurrency)
+      const addressIds = Object.keys(latestByAddress);
+      const updatePromises = addressIds.map(id =>
+        DeviceAddress.update(
+          { 
+            last_value: latestByAddress[id].value, 
+            is_connected: latestByAddress[id].is_connected 
+          },
+          { where: { id }, logging: false }
+        )
+      );
+      
+      await Promise.all(updatePromises);
+
+      console.log(`DB Write: ${batch.length} device log records`);
+    } catch (err) {
+      console.error('DB Error:', err.message);
+      // Put data back to buffer on error for retry
+      if (batch.length > 0) {
+        state.dataBuffer = [...batch, ...state.dataBuffer];
+      }
+    }
   }
 
-  try {
-    await DeviceLog.bulkCreate(batch, { logging: false });
+  // Flush product logs buffer
+  if (state.productLogBuffer.length) {
+    // Prevent buffer from growing too large - force flush if too big
+    let productBatch;
+    if (state.productLogBuffer.length > MAX_BUFFER_SIZE) {
+      // Take the last MAX_BUFFER_SIZE items and discard older ones
+      productBatch = state.productLogBuffer.slice(-MAX_BUFFER_SIZE);
+      state.productLogBuffer = [];
+      console.warn(`Product buffer overflow: discarded ${state.productLogBuffer.length - MAX_BUFFER_SIZE} records`);
+    } else {
+      productBatch = [...state.productLogBuffer];
+      state.productLogBuffer = [];
+    }
 
-    // Group updates by address_id to reduce number of queries
-    const latestByAddress = {};
-    batch.forEach(l => {
-      // Keep the most recent value for each address_id
-      latestByAddress[l.address_id] = { value: l.value, is_connected: l.status === 1, created_at: l.created_at };
-    });
-
-    // Use Promise.all with individual updates (but limit concurrency)
-    const addressIds = Object.keys(latestByAddress);
-    const updatePromises = addressIds.map(id =>
-      DeviceAddress.update(
-        { 
-          last_value: latestByAddress[id].value, 
-          is_connected: latestByAddress[id].is_connected 
-        },
-        { where: { id }, logging: false }
-      )
-    );
-    
-    await Promise.all(updatePromises);
-
-    console.log(`DB Write: ${batch.length} records`);
-  } catch (err) {
-    console.error('DB Error:', err.message);
-    // Put data back to buffer on error for retry
-    if (batch.length > 0) {
-      state.dataBuffer = [...batch, ...state.dataBuffer];
+    try {
+      await ProductLog.bulkCreate(productBatch, { logging: false });
+      console.log(`DB Write: ${productBatch.length} product log records`);
+    } catch (err) {
+      console.error('DB Error:', err.message);
+      // Put data back to buffer on error for retry
+      if (productBatch.length > 0) {
+        state.productLogBuffer = [...productBatch, ...state.productLogBuffer];
+      }
     }
   }
 }
@@ -305,6 +338,114 @@ function startPollWorker() {
   connectPLC();
 }
 
+let prevComplete = 0;
+const { Product } = require('./models');
+
+async function getOpertionTime() {
+  try {
+    const data = await service.getPlcAddresses();
+
+    const plc_onoff = data.plc_address_output;
+    const plc_active = data.plc_address_active;
+    const plc_complete = data.plc_address_complete;
+
+    // =========================
+    // 1. Validate address
+    // =========================
+    if (
+      plc_onoff == null ||
+      plc_active == null ||
+      plc_complete == null
+    ) {
+      console.error("❌ PLC Address is missing");
+      return;
+    }
+
+    let plcOnoffValue = 0;
+    let runningValue = "";
+    let completeValue = 0;
+
+    // =========================
+    // 2. Read PLC (แยก try)
+    // =========================
+    try {
+      plcOnoffValue = await readModbusValue(plc_onoff);
+      runningValue = await readModbusValue(plc_active);
+      completeValue = await readModbusValue(plc_complete);
+            // console.log(`Read PLC: ${plc_onoff}=${plcOnoffValue}, ${plc_active}=${runningValue}, ${plc_complete}=${completeValue}`);
+    } catch (err) {
+      console.error("❌ PLC Read Error:", err.message);
+      return; // หยุดรอบนี้ ไม่ให้ระบบล่ม
+    }
+
+    // Find product by ID matching the runningValue from PLC
+    // runningValue should be a numeric ID that matches a product in the database
+    const productId = parseInt(runningValue, 10);
+    
+    if (isNaN(productId)) {
+      console.error("❌ Invalid product ID from PLC:", runningValue);
+      return;
+    }
+
+    const product = await repo.findById(productId);
+    
+    if (!product) {
+      console.error("❌ Product not found with ID:", productId);
+      return;
+    }
+
+    // =========================
+    // 3. Store values to product log buffer (like device log)
+    // =========================
+    const now = new Date();
+    
+    // Store plc_onoff value
+    state.productLogBuffer.push({
+      product_id: productId,
+      plc_onoff_value: plcOnoffValue,
+      plc_active_value: runningValue, // Convert string to 0/1 for consistency
+      plc_complete_value: completeValue,
+      created_at: now
+    });
+
+    // =========================
+    // 4. Downtime Logic
+    // =========================
+    try {
+      if (plcOnoffValue === 0) {
+        await logDowntimeEventProduct(productId, 'START', 'rule.name');
+      } else {
+        await logDowntimeEventProduct(productId, 'END', 'rule.name');
+      }
+    } catch (err) {
+      console.error("❌ Downtime Log Error:", err.message);
+    }
+
+    // =========================
+    // 5. Total Output Logic
+    // =========================
+    try {
+      if (prevComplete === 0 && completeValue === 1) {
+        await Product.increment(
+          { total_output: 1 },
+          { where: { id: productId } }
+        );
+
+        console.log("✅ Output +1");
+      }
+    } catch (err) {
+      console.error("❌ Increment Error:", err.message);
+    }
+
+    // =========================
+    // 6. Update state
+    // =========================
+    prevComplete = completeValue;
+
+  } catch (err) {
+    console.error("🔥 getOpertionTime ERROR:", err);
+  }
+}
 module.exports = { startPollWorker, reloadPolling, readSingleAddress, writeSingleAddress, isPlcConnected: () => state.isPlcConnected };
 
 if (require.main === module) {

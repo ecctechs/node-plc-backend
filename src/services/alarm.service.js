@@ -2,6 +2,7 @@
 
 const { DeviceAlarmRule, DeviceAlarmState, DeviceAlarmEvent, sequelize } = require('../../models');
 const { sendAlarmEmail } = require('./email.service');
+const { logEvent: logDowntimeEvent } = require('../../services/downtimeLog.service');
 
 // Evaluate alarm condition against current value
 function evaluateCondition(value, rule) {
@@ -61,6 +62,8 @@ async function processAlarms(addressId, deviceId, value) {
               event_type: 'TRIGGER',
               value: value
             }, { transaction: t });
+
+            await logDowntimeEvent(deviceId, 'START', rule.name, addressId);
           }
 
           const shouldSendEmail = (secondsSinceLastEmail === null) || (secondsSinceLastEmail >= (rule.repeat_interval_sec || 900));
@@ -114,6 +117,8 @@ async function processAlarms(addressId, deviceId, value) {
             event_type: 'RECOVER',
             value: value
           }, { transaction: t });
+
+          await logDowntimeEvent(deviceId, 'END', rule.name, addressId);
         }
       });
 
