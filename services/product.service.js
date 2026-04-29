@@ -38,11 +38,11 @@ exports.update = async (id, payload) => {
   const product = await repo.findById(id);
   if (!product) throw { status: 404, message: 'ไม่พบสินค้านี้' };
 
-  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete } = payload;
+  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete, plc_address_reject } = payload;
 
   if (name && name !== product.name) {
     const exists = await repo.findByName(name);
-    if (exists) throw { status: 409, message: 'ชื่อสินค้านี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น' };
+    if (exists) throw new Error('ชื่อสินค้านี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น');
   }
 
   const updateData = {};
@@ -53,6 +53,7 @@ exports.update = async (id, payload) => {
   if (plc_address_active !== undefined) updateData.plc_address_active = plc_address_active;
   if (total_output !== undefined) updateData.total_output = total_output;
   if (plc_address_complete !== undefined) updateData.plc_address_complete = plc_address_complete;
+  if (plc_address_reject !== undefined) updateData.plc_address_reject = plc_address_reject;
 
   await repo.update(id, updateData);
   return await repo.findById(id);

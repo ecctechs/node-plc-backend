@@ -405,6 +405,7 @@ async function getOpertionTime() {
       plc_onoff_value: plcOnoffValue,
       plc_active_value: runningValue, // Convert string to 0/1 for consistency
       plc_complete_value: completeValue,
+      plc_reject_value: rejectValue,
       created_at: now
     });
 
