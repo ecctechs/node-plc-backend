@@ -12,7 +12,7 @@ exports.getById = async (id) => {
 };
 
 exports.create = async (payload) => {
-  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete } = payload;
+  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete , plc_address_reject} = payload;
 
   if (!name) {
     throw new Error('name is required');
@@ -28,7 +28,8 @@ exports.create = async (payload) => {
     plc_address_output,
     plc_address_active,
     total_output,
-    plc_address_complete
+    plc_address_complete,
+    plc_address_reject
   });
 
   return product;
@@ -68,10 +69,10 @@ exports.delete = async (id) => {
 };
 
 exports.updatePlcAddresses = async (payload) => {
-  const { plc_address_output, plc_address_active, plc_address_complete } = payload;
+  const { plc_address_output, plc_address_active, plc_address_complete , plc_address_reject } = payload;
 
-  if (plc_address_output === undefined && plc_address_active === undefined && plc_address_complete === undefined) {
-    throw new Error('plc_address_output, plc_address_active, or plc_address_complete is required');
+  if (plc_address_output === undefined && plc_address_active === undefined && plc_address_complete === undefined && plc_address_reject === undefined) {
+    throw new Error('plc_address_output, plc_address_active, plc_address_complete, or plc_address_reject is required');
   }
 
   const products = await repo.findAll({});
@@ -79,6 +80,7 @@ exports.updatePlcAddresses = async (payload) => {
   if (plc_address_output !== undefined) updateData.plc_address_output = plc_address_output;
   if (plc_address_active !== undefined) updateData.plc_address_active = plc_address_active;
   if (plc_address_complete !== undefined) updateData.plc_address_complete = plc_address_complete;
+  if (plc_address_reject !== undefined) updateData.plc_address_reject = plc_address_reject;
 
   for (const product of products) {
     await repo.update(product.id, updateData);
@@ -97,6 +99,7 @@ exports.getPlcAddresses = async () => {
   return {
     plc_address_output: products[0].plc_address_output,
     plc_address_active: products[0].plc_address_active,
-    plc_address_complete: products[0].plc_address_complete
+    plc_address_complete: products[0].plc_address_complete,
+    plc_address_reject: products[0].plc_address_reject
   };
 };
