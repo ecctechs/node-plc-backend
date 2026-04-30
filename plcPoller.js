@@ -339,6 +339,7 @@ function startPollWorker() {
 }
 
 let prevComplete = 0;
+let prevReject = 0;
 const { Product } = require('./models');
 
 async function getOpertionTime() {
@@ -446,9 +447,26 @@ async function getOpertionTime() {
     }
 
     // =========================
+    // 7. Reject Output Logic
+    // =========================
+    try {
+      if (prevReject === 0 && rejectValue === 1) {
+        await Product.increment(
+          { reject_output: 1 },
+          { where: { id: productId } }
+        );
+
+        console.log("✅ Reject Output +1");
+      }
+    } catch (err) {
+      console.error("❌ Reject Increment Error:", err.message);
+    }
+
+    // =========================
     // 6. Update state
     // =========================
     prevComplete = completeValue;
+    prevReject = rejectValue;
 
   } catch (err) {
     console.error("🔥 getOpertionTime ERROR:", err);
