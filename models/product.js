@@ -50,6 +50,17 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'PLC Address for complete signal'
     },
+    plc_address_reject: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'PLC Address for reject signal'
+    },
+    reject_output: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+      comment: 'Total reject count'
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
