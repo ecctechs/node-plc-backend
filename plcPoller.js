@@ -348,6 +348,9 @@ async function getOpertionTime() {
     const plc_onoff = data.plc_address_output;
     const plc_active = data.plc_address_active;
     const plc_complete = data.plc_address_complete;
+     const plc_reject = data.plc_address_reject;
+
+    //  console.log(`PLC Addresses: ON/OFF=${plc_onoff}, ACTIVE=${plc_active}, COMPLETE=${plc_complete}, REJECT=${plc_reject}`);
 
     // =========================
     // 1. Validate address
@@ -355,7 +358,8 @@ async function getOpertionTime() {
     if (
       plc_onoff == null ||
       plc_active == null ||
-      plc_complete == null
+      plc_complete == null ||
+      plc_reject == null
     ) {
       console.error("❌ PLC Address is missing");
       return;
@@ -364,6 +368,7 @@ async function getOpertionTime() {
     let plcOnoffValue = 0;
     let runningValue = "";
     let completeValue = 0;
+    let rejectValue = 0;
 
     // =========================
     // 2. Read PLC (แยก try)
@@ -372,6 +377,8 @@ async function getOpertionTime() {
       plcOnoffValue = await readModbusValue(plc_onoff);
       runningValue = await readModbusValue(plc_active);
       completeValue = await readModbusValue(plc_complete);
+      rejectValue = await readModbusValue(plc_reject);
+
             // console.log(`Read PLC: ${plc_onoff}=${plcOnoffValue}, ${plc_active}=${runningValue}, ${plc_complete}=${completeValue}`);
     } catch (err) {
       console.error("❌ PLC Read Error:", err.message);
