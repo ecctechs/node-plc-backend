@@ -19,6 +19,16 @@ module.exports = {
         onDelete: 'CASCADE'
       },
 
+      address_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'device_addresses',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
+
       alarm_rule_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -55,14 +65,6 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.fn('now')
-      },
-
-      unique: {
-        type: Sequelize.STRING
-      },
-      first_detected_at: {
-        type: Sequelize.DATE,
-        allowNull: true
       }
     });
 
