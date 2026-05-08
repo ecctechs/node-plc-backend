@@ -18,5 +18,7 @@ app.use('/api/rooms', require('../routes/room.route'));
 app.use('/api/products', require('../routes/product.route'));
 app.use('/api/downtime', require('../routes/downtimeLog.route'));
 app.use('/api/downtime-products', require('../routes/downtimeProduct.route'));
+app.use('/api/users', require('../routes/user.route'));
+app.use('/api/auth', require('../routes/auth.route'));
 
 module.exports = app;

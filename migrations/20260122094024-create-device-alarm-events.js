@@ -19,6 +19,16 @@ module.exports = {
         onDelete: 'CASCADE'
       },
 
+      address_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'device_addresses',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
+
       alarm_rule_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
