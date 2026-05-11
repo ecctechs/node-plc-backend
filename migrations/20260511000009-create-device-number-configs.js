@@ -6,62 +6,52 @@ module.exports = {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
-        primaryKey: true
+        primaryKey: true,
+        allowNull: false
       },
-
-      device_id: {
+      address_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'devices',
-          key: 'id'
-        },
+        references: { model: 'device_addresses', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
       decimal_places: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 0
       },
-
       scale: {
         type: Sequelize.FLOAT,
         allowNull: false,
         defaultValue: 1
       },
-
       offset: {
         type: Sequelize.FLOAT,
         allowNull: false,
         defaultValue: 0
       },
-
       min_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
       max_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
       unit: {
         type: Sequelize.STRING,
         allowNull: true
       },
-
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },

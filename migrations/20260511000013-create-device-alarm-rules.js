@@ -6,94 +6,85 @@ module.exports = {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
-        primaryKey: true
+        primaryKey: true,
+        allowNull: false
       },
-
       device_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'devices',
-          key: 'id'
-        },
+        references: { model: 'devices', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
+      address_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: 'device_addresses', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
       name: {
         type: Sequelize.STRING,
         allowNull: false
       },
-
       data_type: {
-        type: Sequelize.STRING, // onoff | number | level
+        type: Sequelize.STRING,
         allowNull: false
       },
-
       condition_type: {
-        type: Sequelize.STRING, // EXACT | MT | MTE | LT | LTE | BTW | LEVEL
+        type: Sequelize.STRING,
         allowNull: false
       },
-
       min_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
       max_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
       level_index: {
         type: Sequelize.INTEGER,
         allowNull: true
       },
-
       duration_sec: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 0   // debounce
+        defaultValue: 0
       },
-
       repeat_interval_sec: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 900 // cooldown (15 นาที)
+        defaultValue: 900
       },
-
       severity: {
-        type: Sequelize.STRING, // info | warning | critical
+        type: Sequelize.STRING,
         allowNull: false,
         defaultValue: 'warning'
       },
-
       notify_email: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: true
       },
-
       email_recipients: {
         type: Sequelize.ARRAY(Sequelize.STRING),
         allowNull: true
       },
-
       is_active: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: true
       },
-
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },

@@ -6,73 +6,54 @@ module.exports = {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
-        primaryKey: true
+        primaryKey: true,
+        allowNull: false
       },
-
       device_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'devices',
-          key: 'id'
-        },
+        references: { model: 'devices', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
       address_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'device_addresses',
-          key: 'id'
-        },
+        references: { model: 'device_addresses', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
       alarm_rule_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'device_alarm_rules',
-          key: 'id'
-        },
+        unique: true,
+        references: { model: 'device_alarm_rules', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
       is_active: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false
       },
-
       last_triggered_at: {
         type: Sequelize.DATE,
         allowNull: true
       },
-
       last_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
-    });
-
-    // unique constraint (device + rule)
-    await queryInterface.addConstraint('device_alarm_states', {
-      fields: ['device_id', 'alarm_rule_id'],
-      type: 'unique',
-      name: 'uniq_device_alarm_state'
     });
   },
 

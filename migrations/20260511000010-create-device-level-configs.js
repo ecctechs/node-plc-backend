@@ -6,71 +6,66 @@ module.exports = {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
-        primaryKey: true
+        primaryKey: true,
+        allowNull: false
       },
-
-      device_id: {
+      address_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: 'devices', key: 'id' },
+        references: { model: 'device_addresses', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
       level_index: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: true,
+        defaultValue: 0
       },
-
       label: {
-        type: Sequelize.STRING,
+        type: Sequelize.TEXT,
         allowNull: false
       },
-
-      mode: {
-        type: Sequelize.STRING, // exact | criteria
-        allowNull: false
-      },
-
-      /* ===== Exact ===== */
-      exact_values: {
-        type: Sequelize.ARRAY(Sequelize.FLOAT),
-        allowNull: true
-      },
-
-      /* ===== Criteria ===== */
       condition_type: {
-        type: Sequelize.STRING, // LT, LTE, MT, MTE, BTW
-        allowNull: true
+        type: Sequelize.TEXT,
+        allowNull: false
       },
-
       min_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
       max_value: {
         type: Sequelize.FLOAT,
         allowNull: true
       },
-
+      mode: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        defaultValue: 'range'
+      },
+      exact_values: {
+        type: Sequelize.ARRAY(Sequelize.INTEGER),
+        allowNull: true,
+        defaultValue: []
+      },
       include_min: {
         type: Sequelize.BOOLEAN,
+        allowNull: true,
         defaultValue: true
       },
-
       include_max: {
         type: Sequelize.BOOLEAN,
+        allowNull: true,
         defaultValue: true
       },
-
       created_at: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.fn('NOW')
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-
       updated_at: {
         type: Sequelize.DATE,
-        defaultValue: Sequelize.fn('NOW')
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },

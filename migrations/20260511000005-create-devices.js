@@ -9,51 +9,51 @@ module.exports = {
         primaryKey: true,
         allowNull: false
       },
-
       name: {
         type: Sequelize.TEXT,
         allowNull: false
       },
-
-      device_type: {
-        type: Sequelize.TEXT,
-        allowNull: false
-        // lamp, pump, motor
+      device_type_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: 'device_types', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
-
-      data_display_type: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-        defaultValue: 'onoff'
+      room_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: 'rooms', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
-
-      plc_address: {
-        type: Sequelize.TEXT,
-        allowNull: false
-      },
-
       refresh_rate_ms: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         defaultValue: 1000
       },
-
+      last_seen_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      last_error_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
       is_active: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: true
       },
-
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },

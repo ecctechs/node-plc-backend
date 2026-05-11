@@ -5,155 +5,109 @@ module.exports = {
     await queryInterface.createTable('interaction_elements', {
       id: {
         type: Sequelize.INTEGER,
-        primaryKey: true,
         autoIncrement: true,
+        primaryKey: true,
         allowNull: false
       },
-
       layout_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'interaction_layouts',
-          key: 'id'
-        },
+        references: { model: 'interaction_layouts', key: 'id' },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
       element_type: {
         type: Sequelize.STRING(50),
-        allowNull: false,
-        // 'status_lamp', 'number_display', 'control_button'
+        allowNull: false
       },
-
       name: {
         type: Sequelize.STRING(255),
-        allowNull: true,
-        // ชื่อ element เช่น "Motor Status"
+        allowNull: true
       },
-
-      // Position (%)
       x_percent: {
         type: Sequelize.DECIMAL(5, 2),
-        allowNull: false,
-        // 0-100
+        allowNull: false
       },
-
       y_percent: {
         type: Sequelize.DECIMAL(5, 2),
-        allowNull: false,
-        // 0-100
+        allowNull: false
       },
-
-      // Size & Style
       size_width: {
         type: Sequelize.INTEGER,
-        allowNull: true,
-        // ขนาด width
+        allowNull: true
       },
-
       size_height: {
         type: Sequelize.INTEGER,
-        allowNull: true,
-        // ขนาด height
+        allowNull: true
       },
-
       font_size: {
         type: Sequelize.INTEGER,
-        allowNull: true,
-        // สำหรับ text
+        allowNull: true
       },
-
       bg_color: {
         type: Sequelize.STRING(20),
-        allowNull: true,
-        // background color
+        allowNull: true
       },
-
       text_color: {
         type: Sequelize.STRING(20),
-        allowNull: true,
-        // text color
+        allowNull: true
       },
-
-      // Element Specific
       unit: {
         type: Sequelize.STRING(20),
-        allowNull: true,
-        // สำหรับ number display
+        allowNull: true
       },
-
       precision: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 0,
-        // ทศนิยม
+        defaultValue: 0
       },
-
-      // Control Button Specific
       active_color: {
         type: Sequelize.STRING(20),
-        allowNull: true,
+        allowNull: true
       },
-
       inactive_color: {
         type: Sequelize.STRING(20),
-        allowNull: true,
+        allowNull: true
       },
-
       button_label: {
         type: Sequelize.STRING(50),
-        allowNull: true,
+        allowNull: true
       },
-
-      // PLC Link
       device_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: {
-          model: 'devices',
-          key: 'id'
-        }
+        references: { model: 'devices', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
-
       address_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: {
-          model: 'device_addresses',
-          key: 'id'
-        }
+        references: { model: 'device_addresses', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
-
       display_order: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 0
       },
-
       is_visible: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: true
       },
-
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
-
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
-
-    // optional indexes
-    await queryInterface.addIndex('interaction_elements', ['layout_id']);
-    await queryInterface.addIndex('interaction_elements', ['device_id']);
-    await queryInterface.addIndex('interaction_elements', ['address_id']);
   },
 
   async down(queryInterface) {
