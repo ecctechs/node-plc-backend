@@ -9,41 +9,37 @@ module.exports = {
         primaryKey: true,
         allowNull: false
       },
-
       device_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'devices',
-          key: 'id'
-        },
+        references: { model: 'devices', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-
+      address_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: 'device_addresses', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
+      },
       event_type: {
         type: Sequelize.STRING(20),
-        allowNull: false,
-        comment: 'START=เริ่มหยุด, END=กลับมารัน'
+        allowNull: false
       },
-
       reason: {
         type: Sequelize.STRING(255),
         allowNull: true
       },
-
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn('now')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
-
-    await queryInterface.addIndex('downtime_logs', ['device_id']);
-    await queryInterface.addIndex('downtime_logs', ['device_id', 'created_at']);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable('downtime_logs');
   }
 };
