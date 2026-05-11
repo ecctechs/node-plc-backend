@@ -20,5 +20,6 @@ app.use('/api/downtime', require('../routes/downtimeLog.route'));
 app.use('/api/downtime-products', require('../routes/downtimeProduct.route'));
 app.use('/api/users', require('../routes/user.route'));
 app.use('/api/auth', require('../routes/auth.route'));
+app.use('/api/data-retention', require('../routes/dataRetention.route'));
 
 module.exports = app;
