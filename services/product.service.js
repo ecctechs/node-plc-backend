@@ -12,7 +12,7 @@ exports.getById = async (id) => {
 };
 
 exports.create = async (payload) => {
-  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete , plc_address_reject} = payload;
+  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete, plc_address_reject, target_oee, target_output } = payload;
 
   if (!name) {
     throw new Error('name is required');
@@ -29,7 +29,9 @@ exports.create = async (payload) => {
     plc_address_active,
     total_output,
     plc_address_complete,
-    plc_address_reject
+    plc_address_reject,
+    target_oee,
+    target_output
   });
 
   return product;
@@ -39,7 +41,7 @@ exports.update = async (id, payload) => {
   const product = await repo.findById(id);
   if (!product) throw { status: 404, message: 'ไม่พบสินค้านี้' };
 
-  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete, plc_address_reject } = payload;
+  const { name, image_path, cycle_time, plc_address_output, plc_address_active, total_output, plc_address_complete, plc_address_reject, target_oee, target_output } = payload;
 
   if (name && name !== product.name) {
     const exists = await repo.findByName(name);
@@ -55,6 +57,8 @@ exports.update = async (id, payload) => {
   if (total_output !== undefined) updateData.total_output = total_output;
   if (plc_address_complete !== undefined) updateData.plc_address_complete = plc_address_complete;
   if (plc_address_reject !== undefined) updateData.plc_address_reject = plc_address_reject;
+  if (target_oee !== undefined) updateData.target_oee = target_oee;
+  if (target_output !== undefined) updateData.target_output = target_output;
 
   await repo.update(id, updateData);
   return await repo.findById(id);

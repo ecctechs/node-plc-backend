@@ -62,6 +62,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0,
       comment: 'Total reject count'
     },
+    target_oee: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Target OEE percentage (0-100)'
+    },
+    target_output: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Target output count per shift/day'
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
