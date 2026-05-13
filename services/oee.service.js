@@ -1,4 +1,5 @@
 const { Product, OeeDailySnapshot } = require('../models');
+const { Op } = require('sequelize');
 const workingTimeService = require('./workingTime.service');
 const downtimeService = require('./downtimeProduct.service');
 
@@ -91,4 +92,47 @@ exports.generateDailyOEE = async (dateStr, currentTime) => {
   }
 
   return results;
+};
+
+exports.getSnapshotHistory = async (productId, days) => {
+  const period = days === 30 ? 30 : 7;
+
+  const localNow = new Date();
+  const dates = [];
+  for (let i = period - 1; i >= 0; i--) {
+    const d = new Date(localNow);
+    d.setDate(d.getDate() - i);
+    dates.push([
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, '0'),
+      String(d.getDate()).padStart(2, '0')
+    ].join('-'));
+  }
+
+  const startDate = dates[0];
+  const endDate   = dates[dates.length - 1];
+
+  const rows = await OeeDailySnapshot.findAll({
+    where: {
+      product_id:    productId,
+      snapshot_date: { [Op.between]: [startDate, endDate] }
+    },
+    attributes: ['snapshot_date', 'oee', 'availability', 'performance', 'quality'],
+    order: [['snapshot_date', 'ASC']]
+  });
+
+  const rowMap = {};
+  rows.forEach(r => { rowMap[r.snapshot_date] = r; });
+
+  return dates.map(date => {
+    const row = rowMap[date];
+    if (!row) return { date, oee: null, availability: null, performance: null, quality: null };
+    return {
+      date,
+      oee:          parseFloat(row.oee),
+      availability: parseFloat(row.availability),
+      performance:  parseFloat(row.performance),
+      quality:      parseFloat(row.quality)
+    };
+  });
 };
