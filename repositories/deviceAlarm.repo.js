@@ -39,3 +39,22 @@ exports.findAllEvents = (startDate, endDate) => {
     order: [['created_at', 'DESC']]
   });
 };
+
+exports.findEventsInRange = (startDate, endDate) => {
+  return DeviceAlarmEvent.findAll({
+    where: { created_at: getDateRange(startDate, endDate) },
+    attributes: ['id', 'alarm_rule_id', 'event_type', 'created_at'],
+    order: [['alarm_rule_id', 'ASC'], ['created_at', 'ASC']]
+  });
+};
+
+exports.findEventsByDeviceId = (deviceId, startDate, endDate) => {
+  return DeviceAlarmEvent.findAll({
+    where: {
+      device_id: deviceId,
+      created_at: getDateRange(startDate, endDate)
+    },
+    attributes: ['id', 'alarm_rule_id', 'event_type', 'created_at'],
+    order: [['alarm_rule_id', 'ASC'], ['created_at', 'ASC']]
+  });
+};

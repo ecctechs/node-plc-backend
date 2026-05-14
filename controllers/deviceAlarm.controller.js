@@ -52,6 +52,42 @@ exports.getById = async (req, res) => {
   }
 };
 
+// GET /api/alarms/events/history?days=7
+exports.getAlarmEventHistory = async (req, res) => {
+  try {
+    const days = parseInt(req.query.days, 10) || 7;
+
+    if (days !== 7 && days !== 30) {
+      return res.status(400).json({ success: false, message: 'days ต้องเป็น 7 หรือ 30' });
+    }
+
+    const data = await service.getAlarmEventHistory(days);
+    res.json({ success: true, days, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/alarms/events/:device_id/history?days=7
+exports.getAlarmEventHistoryByDevice = async (req, res) => {
+  try {
+    const deviceId = parseInt(req.params.device_id, 10);
+    const days     = parseInt(req.query.days, 10) || 7;
+
+    if (isNaN(deviceId)) {
+      return res.status(400).json({ success: false, message: 'device_id ไม่ถูกต้อง' });
+    }
+    if (days !== 7 && days !== 30) {
+      return res.status(400).json({ success: false, message: 'days ต้องเป็น 7 หรือ 30' });
+    }
+
+    const data = await service.getAlarmEventHistoryByDevice(deviceId, days);
+    res.json({ success: true, device_id: deviceId, days, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // GET /api/events/all?start&end
 exports.getHistoryAll = async (req, res) => {
   try {
