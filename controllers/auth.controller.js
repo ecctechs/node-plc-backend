@@ -40,7 +40,12 @@ exports.login = async (req, res) => {
           email: user.email,
           role: user.role,
           is_active: user.is_active,
-          employee_id: user.employee_id
+          employee_id: user.employee_id,
+          rooms: (user.roomAssignments || []).map(ra => ({
+            id: ra.room_id,
+            name: ra.room?.name,
+            scope: ra.scope
+          }))
         }
       }
     });

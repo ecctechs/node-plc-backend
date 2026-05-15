@@ -1,9 +1,16 @@
 'use strict';
 
-const { User } = require('../models');
+const { User, UserRoom, Room } = require('../models');
 
 exports.findByEmail = (email) => {
-  return User.findOne({ where: { email } });
+  return User.findOne({
+    where: { email },
+    include: [{
+      model: UserRoom,
+      as: 'roomAssignments',
+      include: [{ model: Room, as: 'room', attributes: ['id', 'name'] }]
+    }]
+  });
 };
 
 exports.findById = (id) => {
