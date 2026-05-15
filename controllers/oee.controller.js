@@ -10,6 +10,29 @@ exports.triggerSnapshot = async (req, res) => {
   }
 };
 
+exports.triggerHourlySnapshot = async (req, res) => {
+  const { date, hour } = req.body;
+  try {
+    const results = await oeeService.generateHourlyOEE(date, hour);
+    res.json({ success: true, count: results.length, results });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getIntradayHistory = async (req, res) => {
+  try {
+    const productId = parseInt(req.params.product_id, 10);
+    if (isNaN(productId)) {
+      return res.status(400).json({ success: false, message: 'product_id ไม่ถูกต้อง' });
+    }
+    const data = await oeeService.getIntradayHistory(productId, req.query.date || null);
+    res.json({ success: true, product_id: productId, date: req.query.date || null, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.getSnapshotHistory = async (req, res) => {
   try {
     const productId = parseInt(req.params.product_id, 10);

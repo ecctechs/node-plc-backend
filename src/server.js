@@ -4,6 +4,7 @@ const app = require('./app');
 
 const { startPollWorker } = require('../plcPoller');
 const { startDailyOEEJob } = require('../jobs/dailyOEEJob');
+const { startHourlyOEEJob } = require('../jobs/hourlyOEEJob');
 
 const PORT = process.env.PORT || 3001;
 
@@ -12,4 +13,5 @@ app.listen(PORT, async () => {
 
    await startPollWorker();
    startDailyOEEJob();
+   startHourlyOEEJob();
 });
