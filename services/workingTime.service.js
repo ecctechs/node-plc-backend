@@ -33,11 +33,11 @@ function calculateDailyPlannedTime(daySchedule) {
   return Math.max(0, totalMinutes);
 }
 
-exports.get = async () => {
-  return await repo.findOne();
+exports.get = async (companyId) => {
+  return await repo.findOne(companyId);
 };
 
-exports.update = async (payload) => {
+exports.update = async (companyId, payload) => {
   // Validate schedule structure
   if (payload.schedule) {
     for (const [day, config] of Object.entries(payload.schedule)) {
@@ -65,11 +65,11 @@ exports.update = async (payload) => {
     }
   }
 
-  return await repo.upsert(payload);
+  return await repo.upsert(payload, companyId);
 };
 
-exports.getPlannedProductionTime = async (dateStr, currentTimeStr) => {
-  const workingTime = await repo.findOne();
+exports.getPlannedProductionTime = async (dateStr, currentTimeStr, companyId) => {
+  const workingTime = await repo.findOne(companyId);
   
   if (!workingTime || !workingTime.schedule) {
     return {
@@ -167,7 +167,7 @@ exports.getPlannedProductionTime = async (dateStr, currentTimeStr) => {
   };
 };
 
-exports.getPlannedProductionTimeRange = async (startDateStr, endDateStr) => {
+exports.getPlannedProductionTimeRange = async (startDateStr, endDateStr, companyId) => {
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
   const results = [];
@@ -175,7 +175,7 @@ exports.getPlannedProductionTimeRange = async (startDateStr, endDateStr) => {
 
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     const dateStr = d.toISOString().split('T')[0];
-    const daily = await this.getPlannedProductionTime(dateStr);
+    const daily = await exports.getPlannedProductionTime(dateStr, null, companyId);
     results.push(daily);
     totalPlannedMinutes += daily.planned_minutes;
   }

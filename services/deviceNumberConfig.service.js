@@ -41,7 +41,18 @@ exports.update = async (addressId, payload) => {
   }
 
   const existing = await repo.findByAddressId(addressId);
-  if (!existing) throw new Error('Number config not found for this address');
+
+  if (!existing) {
+    return repo.create({
+      address_id: addressId,
+      decimal_places: payload.decimal_places ?? 0,
+      scale: payload.scale ?? 1,
+      offset: payload.offset ?? 0,
+      min_value: payload.min_value,
+      max_value: payload.max_value,
+      unit: payload.unit
+    });
+  }
 
   const [_, [updated]] = await repo.update(existing.id, {
     decimal_places: payload.decimal_places ?? existing.decimal_places,

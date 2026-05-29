@@ -21,7 +21,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 9,
       // aspect ratio ส่วนสูง
-    }
+    },
+    company_id: { type: DataTypes.INTEGER, allowNull: false }
   }, {
     tableName: 'interaction_layouts',
     underscored: true,
@@ -34,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'elements',
       onDelete: 'CASCADE'
     });
+    InteractionLayout.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
   };
 
   return InteractionLayout;

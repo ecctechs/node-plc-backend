@@ -3,10 +3,23 @@
 const repo = require('../repositories/deviceAlarm.repo');
 const addressRepo = require('../repositories/deviceAddress.repo');
 
-// Create alarm rule for an address
-exports.createAlarm = async (addressId, payload) => {
+const verifyAddressOwnership = async (addressId, companyId) => {
   const address = await addressRepo.findById(addressId);
-  if (!address) throw new Error('Address not found');
+  if (!address || address.device.company_id !== companyId) throw new Error('Address not found');
+  return address;
+};
+
+const verifyAlarmOwnership = async (alarmId, companyId) => {
+  const alarm = await repo.findById(alarmId);
+  if (!alarm) throw new Error('Alarm rule not found');
+  const address = await addressRepo.findById(alarm.address_id);
+  if (!address || address.device.company_id !== companyId) throw new Error('Alarm rule not found');
+  return alarm;
+};
+
+// Create alarm rule for an address
+exports.createAlarm = async (addressId, payload, companyId) => {
+  const address = await verifyAddressOwnership(addressId, companyId);
 
   if (payload.data_type !== address.data_type) {
     throw new Error('data_type does not match address data type');
@@ -20,14 +33,12 @@ exports.createAlarm = async (addressId, payload) => {
 };
 
 // Update alarm rule
-exports.updateAlarm = async (alarmId, payload) => {
-  const alarm = await repo.findById(alarmId);
-  if (!alarm) throw new Error('Alarm rule not found');
+exports.updateAlarm = async (alarmId, payload, companyId) => {
+  const alarm = await verifyAlarmOwnership(alarmId, companyId);
 
   // If address_id is being changed, validate the new address
   if (payload.address_id) {
-    const address = await addressRepo.findById(payload.address_id);
-    if (!address) throw new Error('Address not found');
+    const address = await verifyAddressOwnership(payload.address_id, companyId);
     if (payload.data_type && payload.data_type !== address.data_type) {
       throw new Error('data_type does not match address data type');
     }
@@ -57,31 +68,25 @@ exports.updateAlarm = async (alarmId, payload) => {
 };
 
 // Soft delete alarm rule - set is_active to false
-exports.deleteAlarm = async (alarmId) => {
-  const alarm = await repo.findById(alarmId);
-  if (!alarm) throw new Error('Alarm rule not found');
-
+exports.deleteAlarm = async (alarmId, companyId) => {
+  await verifyAlarmOwnership(alarmId, companyId);
   return repo.deleteRule(alarmId);
 };
 
 // Get all alarm rules for an address
-exports.getByAddressId = async (addressId) => {
-  const address = await addressRepo.findById(addressId);
-  if (!address) throw new Error('Address not found');
-
+exports.getByAddressId = async (addressId, companyId) => {
+  await verifyAddressOwnership(addressId, companyId);
   return await repo.findByAddressId(addressId);
 };
 
 // Get alarm rule by ID
-exports.getById = async (alarmId) => {
-  const alarm = await repo.findById(alarmId);
-  if (!alarm) throw new Error('Alarm rule not found');
-  return alarm;
+exports.getById = async (alarmId, companyId) => {
+  return await verifyAlarmOwnership(alarmId, companyId);
 };
 
 // Get all alarm events in date range
-exports.getAllHistory = async (start, end) => {
-  return await repo.findAllEvents(start, end);
+exports.getAllHistory = async (start, end, companyId) => {
+  return await repo.findAllEvents(start, end, companyId);
 };
 
 const toLocalDate = (d) => {
@@ -147,14 +152,14 @@ const aggregateEventsByDay = (events, dates) => {
 };
 
 // GET /api/alarms/events/history?days — รวมทุก device
-exports.getAlarmEventHistory = async (days) => {
+exports.getAlarmEventHistory = async (days, companyId) => {
   const dates = buildDateList(days);
-  const events = await repo.findEventsInRange(dates[0], dates[dates.length - 1]);
+  const events = await repo.findEventsInRange(dates[0], dates[dates.length - 1], companyId);
   return aggregateEventsByDay(events, dates);
 };
 
 // GET /api/alarms/events/:device_id/history?days — แยกตาม device
-exports.getAlarmEventHistoryByDevice = async (deviceId, days) => {
+exports.getAlarmEventHistoryByDevice = async (deviceId, days, companyId) => {
   const dates = buildDateList(days);
   const events = await repo.findEventsByDeviceId(deviceId, dates[0], dates[dates.length - 1]);
   return aggregateEventsByDay(events, dates);

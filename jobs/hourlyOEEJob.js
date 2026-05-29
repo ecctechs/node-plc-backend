@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const oeeService = require('../services/oee.service');
+const { Company } = require('../models');
 
 function startHourlyOEEJob() {
   cron.schedule('0 * * * *', async () => {
@@ -13,8 +14,13 @@ function startHourlyOEEJob() {
       ].join('-');
       const hourStr = `${String(localNow.getHours()).padStart(2, '0')}:00`;
 
-      const results = await oeeService.generateHourlyOEE(dateStr, hourStr);
-      console.log(`[Cron] OEE Hourly Snapshot บันทึกสำเร็จ (${results.length} products) @ ${hourStr}`);
+      const companies = await Company.findAll({ where: { is_active: true } });
+      let total = 0;
+      for (const company of companies) {
+        const results = await oeeService.generateHourlyOEE(dateStr, hourStr, company.id);
+        total += results.length;
+      }
+      console.log(`[Cron] OEE Hourly Snapshot บันทึกสำเร็จ (${total} products) @ ${hourStr}`);
     } catch (err) {
       console.error('[Cron] OEE Hourly Snapshot ล้มเหลว:', err.message);
     }

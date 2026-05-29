@@ -23,7 +23,7 @@ async function getTodayOutput(product, today) {
   };
 }
 
-exports.generateDailyOEE = async (dateStr, currentTime) => {
+exports.generateDailyOEE = async (dateStr, currentTime, companyId) => {
   // ใช้ local date ไม่ใช่ UTC เพื่อ timezone ถูกต้อง
   const localNow = new Date();
   const today = dateStr || [
@@ -37,11 +37,11 @@ exports.generateDailyOEE = async (dateStr, currentTime) => {
   const startOfDay = new Date(`${today}T00:00:00`);
   const endOfDay   = new Date(`${today}T23:59:59`);
 
-  const products = await Product.findAll();
+  const products = await Product.findAll({ where: { company_id: companyId } });
   const results = [];
 
   for (const product of products) {
-    const wtData = await workingTimeService.getPlannedProductionTime(today, now);
+    const wtData = await workingTimeService.getPlannedProductionTime(today, now, companyId);
     const planned_min = wtData.breakdown.elapsed_minutes || 0;
 
     const downtimeSeconds = await downtimeService.calculateDowntime(
@@ -94,7 +94,7 @@ exports.generateDailyOEE = async (dateStr, currentTime) => {
   return results;
 };
 
-exports.generateHourlyOEE = async (dateStr, hourStr) => {
+exports.generateHourlyOEE = async (dateStr, hourStr, companyId) => {
   const localNow = new Date();
   const today = dateStr || [
     localNow.getFullYear(),
@@ -106,11 +106,11 @@ exports.generateHourlyOEE = async (dateStr, hourStr) => {
   const startOfDay       = new Date(`${today}T00:00:00`);
   const endOfCurrentHour = new Date(`${today}T${now}:00`);
 
-  const products = await Product.findAll();
+  const products = await Product.findAll({ where: { company_id: companyId } });
   const results  = [];
 
   for (const product of products) {
-    const wtData      = await workingTimeService.getPlannedProductionTime(today, now);
+    const wtData      = await workingTimeService.getPlannedProductionTime(today, now, companyId);
     const planned_min = wtData.breakdown.elapsed_minutes || 0;
 
     const downtimeSeconds = await downtimeService.calculateDowntime(
@@ -162,7 +162,9 @@ exports.generateHourlyOEE = async (dateStr, hourStr) => {
   return results;
 };
 
-exports.getIntradayHistory = async (productId, dateStr) => {
+exports.getIntradayHistory = async (productId, dateStr, companyId) => {
+  const product = await Product.findOne({ where: { id: productId, company_id: companyId } });
+  if (!product) throw { status: 404, message: 'ไม่พบสินค้านี้' };
   const localNow = new Date();
   const date = dateStr || [
     localNow.getFullYear(),
@@ -193,7 +195,9 @@ exports.getIntradayHistory = async (productId, dateStr) => {
   }));
 };
 
-exports.getSnapshotHistory = async (productId, days) => {
+exports.getSnapshotHistory = async (productId, days, companyId) => {
+  const product = await Product.findOne({ where: { id: productId, company_id: companyId } });
+  if (!product) throw { status: 404, message: 'ไม่พบสินค้านี้' };
   const period = days === 30 ? 30 : 7;
 
   const localNow = new Date();

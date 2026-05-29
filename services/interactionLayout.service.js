@@ -1,15 +1,17 @@
 const { InteractionLayout, InteractionElement } = require('../models');
 
 // List all layouts
-exports.getAllLayouts = async () => {
+exports.getAllLayouts = async (companyId) => {
   return await InteractionLayout.findAll({
+    where: { company_id: companyId },
     order: [['id', 'ASC']]
   });
 };
 
 // Get layout by ID with elements
-exports.getLayoutById = async (id) => {
-  const layout = await InteractionLayout.findByPk(id, {
+exports.getLayoutById = async (id, companyId) => {
+  const layout = await InteractionLayout.findOne({
+    where: { id, company_id: companyId },
     include: [
       {
         model: InteractionElement,
@@ -18,27 +20,28 @@ exports.getLayoutById = async (id) => {
       }
     ]
   });
-  
+
   if (!layout) {
     throw new Error('Layout not found');
   }
-  
+
   return layout;
 };
 
 // Create new layout
 exports.createLayout = async (data) => {
-  const { name, machine_image, aspect_ratio_width, aspect_ratio_height } = data;
-  
+  const { name, machine_image, aspect_ratio_width, aspect_ratio_height, company_id } = data;
+
   if (!name) {
     throw new Error('name is required');
   }
-  
+
   return await InteractionLayout.create({
     name,
     machine_image,
     aspect_ratio_width: aspect_ratio_width || 16,
-    aspect_ratio_height: aspect_ratio_height || 9
+    aspect_ratio_height: aspect_ratio_height || 9,
+    company_id
   });
 };
 

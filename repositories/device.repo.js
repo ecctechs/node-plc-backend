@@ -1,11 +1,16 @@
 const { Device, sequelize, DeviceAddress, DeviceLog, Room, DeviceType, DeviceAlarmRule, DeviceAlarmState } = require('../models');
 const { QueryTypes, Op } = require('sequelize');
+const numberConfigRepo = require('./deviceNumberConfig.repo');
+const levelConfigRepo = require('./deviceLevelConfig.repo');
 
 // List all devices with their addresses
 exports.findAll = async (filter = {}) => {
   const where = {};
   if (filter.is_active !== undefined) {
     where.is_active = filter.is_active === true || filter.is_active === 'true';
+  }
+  if (filter.company_id !== undefined) {
+    where.company_id = filter.company_id;
   }
   return await Device.findAll({
     where,
@@ -27,7 +32,8 @@ exports.create = async (data) => {
       device_type_id: data.device_type_id || null,
       room_id: data.room_id || null,
       refresh_rate_ms: Math.max(50, Number(data.refresh_rate_ms) || 50),
-      is_active: true
+      is_active: true,
+      company_id: data.company_id
     }, { transaction: t });
 
     if (data.addresses && data.addresses.length > 0) {
@@ -55,7 +61,7 @@ exports.create = async (data) => {
 };
 
 // Find device by name (for duplicate check)
-exports.findByName = async (name) => Device.findOne({ where: { name } });
+exports.findByName = async (name, companyId) => Device.findOne({ where: { name, company_id: companyId } });
 
 // Find devices by device_type_id (for checking if device type is in use)
 exports.findByDeviceTypeId = async (deviceTypeId) => {
@@ -123,6 +129,17 @@ exports.update = async (id, data) => {
             data_type: addr.data_type,
             refresh_rate_ms: Math.max(50, Number(addr.refresh_rate_ms) || 50)
           }, { where: { id: addr.id }, transaction: t });
+
+          // Cleanup configs ที่ไม่ compatible กับ data_type ใหม่
+          if (addr.data_type) {
+            const numberTypes = ['number', 'number_gauge'];
+            if (!numberTypes.includes(addr.data_type)) {
+              await numberConfigRepo.removeByAddressId(addr.id);
+            }
+            if (addr.data_type !== 'level') {
+              await levelConfigRepo.removeByAddressId(addr.id);
+            }
+          }
         } else {
           // Create new address
           await DeviceAddress.create({

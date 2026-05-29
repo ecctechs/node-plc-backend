@@ -20,7 +20,7 @@ exports.upload = upload;
 
 exports.getProducts = async (req, res) => {
   try {
-    const data = await service.list();
+    const data = await service.list(req.companyId);
     res.json(data);
   } catch (e) {
     res.status(500).json({ message: e.message });
@@ -50,7 +50,7 @@ exports.createProduct = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await service.getById(id);
+    const product = await service.getById(id, req.companyId);
     res.json({ success: true, data: product });
   } catch (err) {
     res.status(err.status || 500).json({ success: false, message: err.message });
@@ -68,7 +68,7 @@ exports.updateProduct = async (req, res) => {
       updateData.image_path = imageUrl;
     }
 
-    const product = await service.update(id, updateData);
+    const product = await service.update(id, req.companyId, updateData);
     res.json({ success: true, data: product });
   } catch (err) {
     res.status(err.status || 500).json({ success: false, message: err.message });
@@ -78,7 +78,7 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    await service.delete(id);
+    await service.delete(id, req.companyId);
     res.json({ success: true, message: 'ลบสินค้าสำเร็จ' });
   } catch (err) {
     res.status(err.status || 500).json({ success: false, message: err.message });
@@ -87,7 +87,7 @@ exports.deleteProduct = async (req, res) => {
 
 exports.updatePlcAddresses = async (req, res) => {
   try {
-    const data = await service.updatePlcAddresses(req.body);
+    const data = await service.updatePlcAddresses(req.body, req.companyId);
     res.json({ success: true, ...data });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -96,7 +96,7 @@ exports.updatePlcAddresses = async (req, res) => {
 
 exports.getPlcAddresses = async (req, res) => {
   try {
-    const data = await service.getPlcAddresses();
+    const data = await service.getPlcAddresses(req.companyId);
     res.json({ success: true, ...data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

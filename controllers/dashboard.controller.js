@@ -1,10 +1,10 @@
 const dashboardService = require('../services/dashboard.service');
-const { DashboardCard, DeviceAddress, DeviceNumberConfig, DeviceAlarmRule } = require('../models');
+const { DashboardCard, DeviceAddress } = require('../models');
 const sequelize = require('../models/index').sequelize;
 
 exports.getCards = async (req, res) => {
   try {
-    const cards = await dashboardService.getCards();
+    const cards = await dashboardService.getCards(req.companyId);
     res.json(cards);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -13,7 +13,7 @@ exports.getCards = async (req, res) => {
 
 exports.createCard = async (req, res) => {
   try {
-    const userId = 1;
+    const userId = req.user.id || 1;
     const { address_id, display_type, position } = req.body;
 
     if (!address_id || !display_type) {
@@ -28,14 +28,12 @@ exports.createCard = async (req, res) => {
     let finalPosition;
 
     if (position !== undefined && position !== null) {
-      // Shift existing cards at or after the given position
       await DashboardCard.update(
         { position: sequelize.literal('position + 1') },
         { where: { user_id: userId, position: { [sequelize.Sequelize.Op.gte]: position } } }
       );
       finalPosition = position;
     } else {
-      // Default: append to end
       finalPosition = await DashboardCard.count({ where: { user_id: userId, is_active: true } }) + 1;
     }
 
@@ -45,7 +43,8 @@ exports.createCard = async (req, res) => {
       address_id,
       display_type,
       position: finalPosition,
-      is_active: true
+      is_active: true,
+      company_id: req.companyId
     });
 
     res.status(201).json(card);
@@ -60,10 +59,7 @@ exports.deleteCard = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    // Delete the card
     await dashboardService.deleteCard(id);
-
-    // Reindex all active cards
     await dashboardService.reindexAll(userId);
 
     res.json({ success: true, message: 'Dashboard card deleted' });
@@ -79,7 +75,6 @@ exports.updateCard = async (req, res) => {
     const userId = req.user.id;
     const { card_id, selectedDeviceId, selectedAddressId, selectedDisplayType, selectedPosition } = req.body;
 
-    // Map frontend field names to backend field names
     const device_id = selectedDeviceId;
     const address_id = selectedAddressId;
     const display_type = selectedDisplayType;
@@ -96,7 +91,6 @@ exports.updateCard = async (req, res) => {
       position
     });
 
-    // Reindex all active cards after update
     await dashboardService.reindexAll(userId);
 
     res.json({ success: true, data: card });

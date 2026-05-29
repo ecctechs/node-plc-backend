@@ -1,3 +1,6 @@
-const { DeviceAddress } = require('../models');
+const { DeviceAddress, Device } = require('../models');
 
-exports.findById = (id) => DeviceAddress.findByPk(id);
+exports.findById = (id) =>
+  DeviceAddress.findByPk(id, {
+    include: [{ model: Device, as: 'device', attributes: ['id', 'company_id'] }]
+  });

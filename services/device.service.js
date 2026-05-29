@@ -190,31 +190,32 @@ exports.create = async (payload) => {
     throw new Error('Name, device_type_id, and at least one address are required');
   }
 
-  const exists = await repo.findByName(name);
+  const companyId = payload.company_id;
+  const exists = await repo.findByName(name, companyId);
   if (exists) throw new Error(`Device name "${name}" already exists`);
 
-  const device = await repo.create({ name, device_type_id, room_id, refresh_rate_ms, addresses });
+  const device = await repo.create({ name, device_type_id, room_id, refresh_rate_ms, company_id: companyId, addresses });
   await reloadPolling();
   return device;
 };
 
 // Get device by ID with full details
-exports.getById = async (id) => {
+exports.getById = async (id, companyId) => {
   const device = await repo.findById(id);
-  if (!device) throw { status: 404, message: 'ไม่พบอุปกรณ์นี้' };
+  if (!device || device.company_id !== companyId) throw { status: 404, message: 'ไม่พบอุปกรณ์นี้' };
   return device;
 };
 
 // Update device
-exports.update = async (id, payload) => {
+exports.update = async (id, companyId, payload) => {
   const device = await repo.findById(id);
-  if (!device) throw { status: 404, message: 'ไม่พบอุปกรณ์นี้' };
+  if (!device || device.company_id !== companyId) throw { status: 404, message: 'ไม่พบอุปกรณ์นี้' };
 
   const { name, device_type_id, room_id, is_active, refresh_rate_ms, addresses } = payload;
 
   // Check for duplicate name (excluding current device)
   if (name && name !== device.name) {
-    const exists = await repo.findByName(name);
+    const exists = await repo.findByName(name, companyId);
     if (exists) throw { status: 409, message: 'ชื่ออุปกรณ์นี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น' };
   }
 
@@ -231,9 +232,9 @@ exports.update = async (id, payload) => {
 };
 
 // Delete device (soft delete - set is_active to false)
-exports.delete = async (id) => {
+exports.delete = async (id, companyId) => {
   const device = await repo.findById(id);
-  if (!device) throw { status: 404, message: 'ไม่พบอุปกรณ์นี้' };
+  if (!device || device.company_id !== companyId) throw { status: 404, message: 'ไม่พบอุปกรณ์นี้' };
 
   await repo.delete(id);
   await reloadPolling();

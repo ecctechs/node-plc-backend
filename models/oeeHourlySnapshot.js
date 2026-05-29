@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'product_id',
         as: 'product'
       });
+      OeeHourlySnapshot.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
     }
   }
 
@@ -66,6 +67,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(8, 2),
       allowNull: false,
       defaultValue: 0
+    },
+    company_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
     created_at: {
       type: DataTypes.DATE,

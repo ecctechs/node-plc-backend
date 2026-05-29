@@ -14,12 +14,13 @@ exports.getDowntimeSummary = async (req, res) => {
     const result = await service.getDowntimeSummary(
       parseInt(productId),
       new Date(start),
-      new Date(end)
+      new Date(end),
+      req.companyId
     );
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(err.status || 500).json({ message: err.message });
   }
 };
 
@@ -34,9 +35,9 @@ exports.logDowntimeEvent = async (req, res) => {
       });
     }
 
-    const result = await service.logEvent(parseInt(productId), event_type, reason);
+    const result = await service.logEvent(parseInt(productId), event_type, reason, req.companyId);
     res.status(201).json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(err.status || 500).json({ message: err.message });
   }
 };

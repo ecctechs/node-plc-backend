@@ -1,8 +1,8 @@
 const dashboardRepo = require('../repositories/dashboard.repository');
 const { DeviceAddress } = require('../models');
 
-exports.getCards = async () => {
-  const cards = await dashboardRepo.findAll();
+exports.getCards = async (companyId) => {
+  const cards = await dashboardRepo.findAll(companyId);
 
   return cards.map(card => {
     const addr = card.address;
@@ -46,7 +46,7 @@ exports.getCards = async () => {
   });
 };
 
-exports.createCard = async (userId, payload) => {
+exports.createCard = async (userId, payload, companyId) => {
   const { address_id, display_type } = payload;
 
   if (!address_id || !display_type) {
@@ -63,7 +63,8 @@ exports.createCard = async (userId, payload) => {
     address_id,
     display_type,
     position: nextPos,
-    is_active: true
+    is_active: true,
+    company_id: companyId
   });
 };
 

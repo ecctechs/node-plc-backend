@@ -12,3 +12,6 @@ exports.findById = (id) => DeviceNumberConfig.findByPk(id);
 
 exports.findByAddressIds = (addressIds) =>
   DeviceNumberConfig.findAll({ where: { address_id: addressIds }, order: [['id', 'ASC']] });
+
+exports.removeByAddressId = (addressId) =>
+  DeviceNumberConfig.destroy({ where: { address_id: addressId } });

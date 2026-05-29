@@ -12,12 +12,17 @@ module.exports = (sequelize, DataTypes) => {
         saturday: { working_hours: [], break_times: [] },
         sunday: { working_hours: [], break_times: [] }
       }
-    }
+    },
+    company_id: { type: DataTypes.INTEGER, allowNull: false }
   }, {
     tableName: 'working_time',
     underscored: true,
     timestamps: true
   });
+
+  WorkingTime.associate = (models) => {
+    WorkingTime.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
+  };
 
   return WorkingTime;
 };

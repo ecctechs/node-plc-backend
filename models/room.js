@@ -1,7 +1,8 @@
 module.exports = (sequelize, DataTypes) => {
   const Room = sequelize.define('Room', {
     name: { type: DataTypes.TEXT, allowNull: false, unique: true },
-    is_active: { type: DataTypes.BOOLEAN, defaultValue: true }
+    is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
+    company_id: { type: DataTypes.INTEGER, allowNull: false }
   }, {
     tableName: 'rooms',
     underscored: true
@@ -16,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       otherKey: 'user_id',
       as: 'users'
     });
+    Room.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
   };
 
   return Room;

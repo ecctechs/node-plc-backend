@@ -1,11 +1,16 @@
 'use strict';
 
-const { User, UserRoom, Room, Role, Company } = require('../models');
+const { User, UserRoom, Room, Role, Company, Employee } = require('../models');
 
 exports.findByEmail = (email) => {
   return User.findOne({
     where: { email },
     include: [
+      {
+        model: Employee,
+        as: 'employee',
+        attributes: ['id', 'employee_id', 'first_name', 'last_name', 'department', 'position', 'phone']
+      },
       {
         model: UserRoom,
         as: 'roomAssignments',

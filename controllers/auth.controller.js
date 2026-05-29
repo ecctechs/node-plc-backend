@@ -61,6 +61,7 @@ exports.login = async (req, res) => {
           company: user.company ? { id: user.company.id, name: user.company.name } : null,
           is_active: user.is_active,
           employee_id: user.employee_id,
+          employee: user.employee || null,
           rooms: (user.roomAssignments || []).map(ra => ({
             id: ra.room_id,
             name: ra.room?.name,

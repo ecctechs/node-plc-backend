@@ -1,8 +1,8 @@
 const { Room } = require('../models');
 
-exports.findAll = () => {
+exports.findAll = (companyId) => {
   return Room.findAll({
-    where: { is_active: true },
+    where: { is_active: true, company_id: companyId },
     order: [['id', 'ASC']]
   });
 };
@@ -11,8 +11,8 @@ exports.findById = (id) => {
   return Room.findByPk(id);
 };
 
-exports.findByName = (name) => {
-  return Room.findOne({ where: { name } });
+exports.findByName = (name, companyId) => {
+  return Room.findOne({ where: { name, company_id: companyId } });
 };
 
 exports.create = (data) => {

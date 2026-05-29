@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
-    }
+    },
+    company_id: { type: DataTypes.INTEGER, allowNull: false }
   }, {
     tableName: 'dashboard_cards',
     underscored: true,
@@ -21,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'address',
       onDelete: 'CASCADE'
     });
-    
+    DashboardCard.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
   };
   
 

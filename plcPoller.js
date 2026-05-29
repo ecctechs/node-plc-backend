@@ -11,6 +11,7 @@ const { logEvent: logDowntimeEventProduct } = require('./services/downtimeProduc
 
 const PLC_HOST = '192.168.3.250';
 const PLC_PORT = 502;
+const POLLER_COMPANY_ID = parseInt(process.env.POLLER_COMPANY_ID, 10) || 1;
 const MODBUS_UNIT_ID = 0;
 const BULK_INSERT_INTERVAL_MS = 2000;
 const DEFAULT_REFRESH_RATE_MS = 1000;
@@ -140,7 +141,7 @@ async function startDynamicPolling() {
   try {
     const addresses = await DeviceAddress.findAll({
       include: [
-        { model: Device, as: 'device' },
+        { model: Device, as: 'device', required: true },
         { model: DeviceNumberConfig, as: 'numberConfig' }
       ]
     });
@@ -344,7 +345,7 @@ const { Product } = require('./models');
 
 async function getOpertionTime() {
   try {
-    const data = await service.getPlcAddresses();
+    const data = await service.getPlcAddresses(POLLER_COMPANY_ID);
 
     const plc_onoff = data.plc_address_output;
     const plc_active = data.plc_address_active;
@@ -422,9 +423,9 @@ async function getOpertionTime() {
     // =========================
     try {
       if (plcOnoffValue === 0) {
-        await logDowntimeEventProduct(productId, 'START', 'rule.name');
+        await logDowntimeEventProduct(productId, 'START', null, POLLER_COMPANY_ID);
       } else {
-        await logDowntimeEventProduct(productId, 'END', 'rule.name');
+        await logDowntimeEventProduct(productId, 'END', null, POLLER_COMPANY_ID);
       }
     } catch (err) {
       console.error("❌ Downtime Log Error:", err.message);

@@ -28,9 +28,9 @@ exports.findAddressesByDeviceTypeAndDisplayTypes = async (deviceTypeId, displayT
   });
 };
 
-exports.findAll = async () => {
+exports.findAll = async (companyId) => {
   return await DashboardCard.findAll({
-    where: { is_active: true },
+    where: { is_active: true, company_id: companyId },
     include: [
       {
         model: DeviceAddress,

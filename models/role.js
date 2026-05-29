@@ -19,8 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     name: {
       type: DataTypes.STRING(100),
-      allowNull: false,
-      unique: true
+      allowNull: false
     },
     tab_permissions: {
       type: DataTypes.JSONB,

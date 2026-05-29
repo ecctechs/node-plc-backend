@@ -1,42 +1,40 @@
 const roomRepo = require('../repositories/room.repo');
 const deviceRepo = require('../repositories/device.repo');
 
-exports.getAll = async () => {
-  return await roomRepo.findAll();
+exports.getAll = async (companyId) => {
+  return await roomRepo.findAll(companyId);
 };
 
-exports.getById = async (id) => {
+exports.getById = async (id, companyId) => {
   const room = await roomRepo.findById(id);
-  if (!room) throw { status: 404, message: 'Room not found' };
+  if (!room || room.company_id !== companyId) throw { status: 404, message: 'Room not found' };
   return room;
 };
 
-exports.create = async (data) => {
+exports.create = async (data, companyId) => {
   const { name } = data;
 
   if (!name) {
     throw { status: 400, message: 'name is required' };
   }
 
-  // Check if name already exists
-  const existing = await roomRepo.findByName(name);
+  const existing = await roomRepo.findByName(name, companyId);
   if (existing) {
     throw { status: 409, message: 'Room name already exists' };
   }
 
-  return await roomRepo.create({ name, is_active: true });
+  return await roomRepo.create({ name, is_active: true, company_id: companyId });
 };
 
-exports.update = async (id, data) => {
+exports.update = async (id, companyId, data) => {
   const room = await roomRepo.findById(id);
-  if (!room) {
+  if (!room || room.company_id !== companyId) {
     throw { status: 404, message: 'Room not found' };
   }
 
-  // Check if name already exists (excluding current id)
   if (data.name) {
-    const existing = await roomRepo.findByName(data.name);
-    if (existing && existing.id !== id) {
+    const existing = await roomRepo.findByName(data.name, companyId);
+    if (existing && existing.id !== parseInt(id)) {
       throw { status: 409, message: 'Room name already exists' };
     }
   }
@@ -45,13 +43,12 @@ exports.update = async (id, data) => {
   return await roomRepo.findById(id);
 };
 
-exports.delete = async (id) => {
+exports.delete = async (id, companyId) => {
   const room = await roomRepo.findById(id);
-  if (!room) {
+  if (!room || room.company_id !== companyId) {
     throw { status: 404, message: 'Room not found' };
   }
 
-  // Check if there are devices using this room
   const devices = await deviceRepo.findByRoomId(id);
   if (devices && devices.length > 0) {
     const deviceNames = devices.map(d => d.name).join(', ');

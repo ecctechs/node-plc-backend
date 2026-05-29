@@ -6,20 +6,21 @@ exports.getDowntimeSummary = async (req, res) => {
     const { start, end } = req.query;
 
     if (!deviceId || !start || !end) {
-      return res.status(400).json({ 
-        message: 'deviceId, start, end are required' 
+      return res.status(400).json({
+        message: 'deviceId, start, end are required'
       });
     }
 
     const result = await service.getDowntimeSummary(
       parseInt(deviceId),
       new Date(start),
-      new Date(end)
+      new Date(end),
+      req.companyId
     );
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(err.status || 500).json({ message: err.message });
   }
 };
 
@@ -34,9 +35,9 @@ exports.logDowntimeEvent = async (req, res) => {
       });
     }
 
-    const result = await service.logEvent(parseInt(deviceId), event_type, reason);
+    const result = await service.logEvent(parseInt(deviceId), event_type, req.companyId, reason);
     res.status(201).json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(err.status || 500).json({ message: err.message });
   }
 };

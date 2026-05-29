@@ -2,7 +2,7 @@ const service = require('../services/workingTime.service');
 
 exports.getWorkingTime = async (req, res) => {
   try {
-    const data = await service.get();
+    const data = await service.get(req.companyId);
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -11,7 +11,7 @@ exports.getWorkingTime = async (req, res) => {
 
 exports.updateWorkingTime = async (req, res) => {
   try {
-    const data = await service.update(req.body);
+    const data = await service.update(req.companyId, req.body);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -21,7 +21,7 @@ exports.updateWorkingTime = async (req, res) => {
 exports.getPlannedProductionTime = async (req, res) => {
   try {
     const { date, current_time } = req.query;
-    const result = await service.getPlannedProductionTime(date, current_time);
+    const result = await service.getPlannedProductionTime(date, current_time, req.companyId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -36,7 +36,7 @@ exports.getPlannedProductionTimeRange = async (req, res) => {
       return res.status(400).json({ message: 'start and end dates are required' });
     }
 
-    const result = await service.getPlannedProductionTimeRange(start, end);
+    const result = await service.getPlannedProductionTimeRange(start, end, req.companyId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -47,9 +47,9 @@ exports.getCurrentPlannedTime = async (req, res) => {
   try {
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
-    const currentTimeStr = now.toTimeString().slice(0, 5); // HH:MM format
+    const currentTimeStr = now.toTimeString().slice(0, 5);
 
-    const result = await service.getPlannedProductionTime(dateStr, currentTimeStr);
+    const result = await service.getPlannedProductionTime(dateStr, currentTimeStr, req.companyId);
     res.json({
       Planned_Time: result.breakdown.elapsed_minutes
     });

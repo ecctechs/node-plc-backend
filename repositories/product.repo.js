@@ -11,8 +11,8 @@ exports.findById = async (id) => {
   return Product.findByPk(id);
 };
 
-exports.findByName = async (name) => {
-  return Product.findOne({ where: { name } });
+exports.findByName = async (name, companyId) => {
+  return Product.findOne({ where: { name, company_id: companyId } });
 };
 
 exports.create = async (data) => {

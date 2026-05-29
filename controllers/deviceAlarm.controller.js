@@ -5,7 +5,7 @@ const service = require('../services/deviceAlarm.service');
 // POST /api/addresses/:addressId/alarms
 exports.create = async (req, res) => {
   try {
-    const data = await service.createAlarm(req.params.addressId, req.body);
+    const data = await service.createAlarm(req.params.addressId, req.body, req.companyId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -15,7 +15,7 @@ exports.create = async (req, res) => {
 // PUT /api/alarms/:alarmId
 exports.update = async (req, res) => {
   try {
-    const data = await service.updateAlarm(req.params.alarmId, req.body);
+    const data = await service.updateAlarm(req.params.alarmId, req.body, req.companyId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -25,7 +25,7 @@ exports.update = async (req, res) => {
 // DELETE /api/alarms/:alarmId
 exports.delete = async (req, res) => {
   try {
-    await service.deleteAlarm(req.params.alarmId);
+    await service.deleteAlarm(req.params.alarmId, req.companyId);
     res.json({ message: 'Alarm deactivated successfully' });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -35,7 +35,7 @@ exports.delete = async (req, res) => {
 // GET /api/addresses/:addressId/alarms
 exports.getByAddressId = async (req, res) => {
   try {
-    const data = await service.getByAddressId(req.params.addressId);
+    const data = await service.getByAddressId(req.params.addressId, req.companyId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -45,7 +45,7 @@ exports.getByAddressId = async (req, res) => {
 // GET /api/alarms/:alarmId
 exports.getById = async (req, res) => {
   try {
-    const data = await service.getById(req.params.alarmId);
+    const data = await service.getById(req.params.alarmId, req.companyId);
     res.json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -61,7 +61,7 @@ exports.getAlarmEventHistory = async (req, res) => {
       return res.status(400).json({ success: false, message: 'days ต้องเป็น 7 หรือ 30' });
     }
 
-    const data = await service.getAlarmEventHistory(days);
+    const data = await service.getAlarmEventHistory(days, req.companyId);
     res.json({ success: true, days, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -81,7 +81,7 @@ exports.getAlarmEventHistoryByDevice = async (req, res) => {
       return res.status(400).json({ success: false, message: 'days ต้องเป็น 7 หรือ 30' });
     }
 
-    const data = await service.getAlarmEventHistoryByDevice(deviceId, days);
+    const data = await service.getAlarmEventHistoryByDevice(deviceId, days, req.companyId);
     res.json({ success: true, device_id: deviceId, days, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -92,7 +92,7 @@ exports.getAlarmEventHistoryByDevice = async (req, res) => {
 exports.getHistoryAll = async (req, res) => {
   try {
     const { start, end } = req.query;
-    const events = await service.getAllHistory(start, end);
+    const events = await service.getAllHistory(start, end, req.companyId);
     const formatEvent = (events) => events.map(e => ({
       id: e.id,
       value: e.value,

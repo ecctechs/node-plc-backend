@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Product.hasMany(models.ProductLog, { foreignKey: 'product_id', as: 'productLogs' });
       Product.hasMany(models.OeeDailySnapshot, { foreignKey: 'product_id', as: 'oeSnapshots' });
+      Product.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
     }
   }
 
@@ -73,6 +74,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null,
       comment: 'Target output count per shift/day'
+    },
+    company_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
     created_at: {
       type: DataTypes.DATE,

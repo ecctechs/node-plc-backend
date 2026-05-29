@@ -3,7 +3,7 @@ const service = require('../services/interactionLayout.service');
 // GET /api/interaction/layouts
 exports.getAllLayouts = async (req, res) => {
   try {
-    const layouts = await service.getAllLayouts();
+    const layouts = await service.getAllLayouts(req.companyId);
     res.json(layouts);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -23,7 +23,7 @@ exports.createLayout = async (req, res) => {
 // GET /api/interaction/layouts/:id
 exports.getLayoutById = async (req, res) => {
   try {
-    const layout = await service.getLayoutById(req.params.id);
+    const layout = await service.getLayoutById(req.params.id, req.companyId);
     res.json(layout);
   } catch (err) {
     res.status(404).json({ message: err.message });

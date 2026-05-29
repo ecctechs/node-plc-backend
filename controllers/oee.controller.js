@@ -3,7 +3,7 @@ const oeeService = require('../services/oee.service');
 exports.triggerSnapshot = async (req, res) => {
   const { date, current_time } = req.body;
   try {
-    const results = await oeeService.generateDailyOEE(date, current_time);
+    const results = await oeeService.generateDailyOEE(date, current_time, req.companyId);
     res.json({ success: true, count: results.length, results });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -13,7 +13,7 @@ exports.triggerSnapshot = async (req, res) => {
 exports.triggerHourlySnapshot = async (req, res) => {
   const { date, hour } = req.body;
   try {
-    const results = await oeeService.generateHourlyOEE(date, hour);
+    const results = await oeeService.generateHourlyOEE(date, hour, req.companyId);
     res.json({ success: true, count: results.length, results });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -26,10 +26,10 @@ exports.getIntradayHistory = async (req, res) => {
     if (isNaN(productId)) {
       return res.status(400).json({ success: false, message: 'product_id ไม่ถูกต้อง' });
     }
-    const data = await oeeService.getIntradayHistory(productId, req.query.date || null);
+    const data = await oeeService.getIntradayHistory(productId, req.query.date || null, req.companyId);
     res.json({ success: true, product_id: productId, date: req.query.date || null, data });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(err.status || 500).json({ success: false, message: err.message });
   }
 };
 
@@ -45,9 +45,9 @@ exports.getSnapshotHistory = async (req, res) => {
       return res.status(400).json({ success: false, message: 'days ต้องเป็น 7 หรือ 30' });
     }
 
-    const data = await oeeService.getSnapshotHistory(productId, days);
+    const data = await oeeService.getSnapshotHistory(productId, days, req.companyId);
     res.json({ success: true, product_id: productId, days, data });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(err.status || 500).json({ success: false, message: err.message });
   }
 };

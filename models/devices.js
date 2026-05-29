@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     refresh_rate_ms: { type: DataTypes.INTEGER, defaultValue: 1000 },
     last_seen_at: { type: DataTypes.DATE },
     last_error_at: { type: DataTypes.DATE },
-    is_active: { type: DataTypes.BOOLEAN, defaultValue: true }
+    is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
+    company_id: { type: DataTypes.INTEGER, allowNull: false }
   }, {
     tableName: 'devices',
     underscored: true
@@ -18,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     Device.hasMany(models.DeviceAlarmRule, { as: 'alarmRules', foreignKey: 'device_id', onDelete: 'CASCADE' });
     Device.belongsTo(models.Room, { foreignKey: 'room_id', as: 'room' });
     Device.belongsTo(models.DeviceType, { foreignKey: 'device_type_id', as: 'deviceType' });
+    Device.belongsTo(models.Company, { foreignKey: 'company_id', as: 'company' });
   };
 
   return Device;
