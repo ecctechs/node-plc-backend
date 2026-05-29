@@ -37,7 +37,8 @@ exports.createProduct = async (req, res) => {
 
     const payload = {
       ...req.body,
-      image_path: imageUrl || req.body.image_path
+      image_path: imageUrl || req.body.image_path,
+      company_id: req.companyId
     };
 
     const data = await service.create(payload);
