@@ -66,6 +66,7 @@ exports.generateDailyOEE = async (dateStr, currentTime, companyId) => {
     await OeeDailySnapshot.upsert({
       product_id:    product.id,
       snapshot_date: today,
+      company_id:    companyId,
       oee,
       availability,
       performance,
@@ -133,6 +134,7 @@ exports.generateHourlyOEE = async (dateStr, hourStr, companyId) => {
     await OeeHourlySnapshot.upsert({
       product_id:    product.id,
       snapshot_hour: endOfCurrentHour,
+      company_id:    companyId,
       oee,
       availability,
       performance,

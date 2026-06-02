@@ -25,7 +25,7 @@
     "migrate:dev": "cross-env NODE_ENV=development sequelize-cli db:migrate",
     "migrate:prod": "cross-env NODE_ENV=production sequelize-cli db:migrate",
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
-    "prod": "NODE_ENV=production node src/server.js",
+    "prod": "cross-env NODE_ENV=production node src/server.js",
     "seed:dev": "cross-env NODE_ENV=development sequelize-cli db:seed:all",
     "undo:dev": "cross-env NODE_ENV=development sequelize-cli db:migrate:undo",
     "dev:dock": "cross-env NODE_ENV=dock nodemon src/server.js",
